@@ -1,2 +1,5 @@
-#git clone https://github.com/manuel-m/bagride
-#git clone https://github.com/manuel-m/sad
+# from .. dir
+git clone https://github.com/manuel-m/bagride
+git clone https://github.com/manuel-m/sad
+git clone https://github.com/manuel-m/tt
+git clone https://github.com/manuel-m/sub0
