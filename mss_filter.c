@@ -2,10 +2,11 @@
 #include <string.h>
 #include "sad.h"
 #include "br_net.h"
-#include "br_trace.h"
-#include "br_parse.h"
+#include "tt.h"
+#include "sz.h"
 
 #define UDP_AIS_PORT 9998
+#define HTTP_AIS_PORT 9997
 
 static sad_filter_t filter;
 
@@ -30,7 +31,7 @@ static int on_stats_response(br_http_client_t* cli_) {
 
 br_http_server_t http_servers[] = {
     {
-        .m_port = 9997,
+        .m_port = HTTP_AIS_PORT,
         .m_gen_response_cb = on_stats_response
     },
 };

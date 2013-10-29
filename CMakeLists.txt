@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 #==============================================================================
 # Additional package ressource finders
 #==============================================================================
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/ressources/CMake/Modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/resources/CMake/Modules")
 
 #==============================================================================
 # The macro below forces the build directory to be different from source directory
@@ -23,6 +23,12 @@ macro_use_sad()
 include(MacroUseBr)
 macro_use_br()
 
+include(MacroUseTt)
+macro_use_tt()
+
+include(MacroUseSz)
+macro_use_sz()
+
 set(MSS_FILTER_DIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dist)
 file(MAKE_DIRECTORY ${MSS_FILTER_DIST_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${MSS_FILTER_DIST_DIR})
@@ -40,11 +46,11 @@ add_executable (${MSS_FILTER_EXE} mss_filter.c )
 
 
 target_link_libraries (${MSS_FILTER_EXE} ${BR_NET_UV_A} )
-target_link_libraries (${MSS_FILTER_EXE} ${BR_TRACE_A} )
+target_link_libraries (${MSS_FILTER_EXE} ${TT_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${UV_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${SAD_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${HTTPPARSER_A} )
-target_link_libraries (${MSS_FILTER_EXE} ${BR_PARSE_A} )
+target_link_libraries (${MSS_FILTER_EXE} ${SZ_A} )
 target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt)
 
 
