@@ -10,6 +10,16 @@
 
 static sad_filter_t filter;
 
+static int on_ais_decoded(struct sad_filter_s * filter_){
+    
+    printf("[ok] %" PRIu64 " mmsi:%zu %s", 
+            filter_->sentences, 
+            filter_->ais.mmsi, 
+            filter_->sentence->start);
+    
+    return 0;
+}
+
 static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
     (void) pserver_;
     sad_decode_multiline(&filter, inbuf_->base, nread_);
@@ -38,7 +48,7 @@ br_http_server_t http_servers[] = {
 
 int main(void) {
 
-    memset(&filter, 0, sizeof (filter));
+    if (sad_filter_init(&filter, on_ais_decoded, NULL)) return 1;
 
     br_udp_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
     br_http_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
