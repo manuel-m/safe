@@ -23,8 +23,8 @@ macro_use_sad()
 include(MacroUseBr)
 macro_use_br()
 
-include(MacroUseTt)
-macro_use_tt()
+include(MacroUseMmtrace)
+macro_use_mmtrace()
 
 include(MacroUseSz)
 macro_use_sz()
@@ -51,6 +51,7 @@ target_link_libraries (${MSS_FILTER_EXE} ${UV_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${SAD_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${HTTPPARSER_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${SZ_A} )
+target_link_libraries (${MSS_FILTER_EXE} ${MMTRACE_A} )
 target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt)
 
 

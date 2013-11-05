@@ -3,7 +3,7 @@ MACRO(macro_use_sad)
 set( CURRENT_SAD_DIR ${PROJECT_SOURCE_DIR}/../sad)
 
 # static lib path
-set (SAD_A ${CURRENT_SAD_DIR}/dist/libsad)
+set (SAD_A ${CURRENT_SAD_DIR}/dist/libmmsad)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(SAD_A "${SAD_A}_d.a")
