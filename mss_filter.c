@@ -11,12 +11,12 @@
 static sad_filter_t filter;
 
 static int on_ais_decoded(struct sad_filter_s * filter_){
-    
-    printf("[ok] %" PRIu64 " mmsi:%u %s", 
+(void)filter_;    
+    /*printf("[ok] %" PRIu64 " mmsi:%u %s", 
             filter_->sentences, 
             filter_->ais.mmsi, 
             filter_->sentence->start);
-    
+    */
     return 0;
 }
 
