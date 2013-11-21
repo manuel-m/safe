@@ -10,7 +10,7 @@
 
 #define UDP_AIS_PORT 9998
 #define HTTP_AIS_PORT 9997
-#define TARGET_IP_SERVER "192.168.100.160"
+#define TARGET_IP_SERVER "192.168.200.160"
 #define TARGET_PORT_SERVER 9990
 
 static sad_filter_t filter;
@@ -35,7 +35,6 @@ static void on_send(uv_udp_send_t* req_, int status){
   char *base = (char*) req_->data;
   free(base);
   free(req_);
-  printf("sent !!!!\n");
 }
 
 
