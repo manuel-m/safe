@@ -8,10 +8,10 @@
 
 
 
+#define HELP_USAGE "usage: mss_filter addr port" 
 #define UDP_AIS_PORT 9998
 #define HTTP_AIS_PORT 9997
-#define TARGET_IP_SERVER "192.168.200.160"
-#define TARGET_PORT_SERVER 9990
+
 
 static sad_filter_t filter;
 
@@ -24,11 +24,8 @@ static double y2 = 36.0;
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
-
 static uv_udp_t send_socket;
 static struct sockaddr_in send_addr;
-
-
 
 static void on_send(uv_udp_send_t* req_, int status){
   (void)status;
@@ -36,7 +33,6 @@ static void on_send(uv_udp_send_t* req_, int status){
   free(base);
   free(req_);
 }
-
 
 static int on_ais_decoded(struct sad_filter_s * filter_){
     
@@ -56,8 +52,6 @@ static int on_ais_decoded(struct sad_filter_s * filter_){
 #endif            
             return 0;
         }
-        
-        
         
         strncpy(last_sentence, sentence->start, sentence->n);
         last_sentence[sentence->n + 1] = '0'; 
@@ -121,9 +115,19 @@ br_http_server_t http_servers[] = {
     },
 };
 
-int main(void) {
+static void mss_info_error(void){
+  printf(HELP_USAGE "\n");
+}
 
-    if (sad_filter_init(&filter, on_ais_decoded, NULL)) return 1;
+int main(int argc, char **argv) { 
+
+    if (3 != argc) goto err;
+    int port = atoi(argv[2]);
+    
+    
+    MM_INFO("init %s:%d", argv[1], port);  
+    
+    if (sad_filter_init(&filter, on_ais_decoded, NULL)) goto err;
     
     br_udp_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
     br_http_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
@@ -131,14 +135,18 @@ int main(void) {
     /* register udp send */
     {
        uv_udp_init(uv_default_loop(), &send_socket);
-       uv_ip4_addr(TARGET_IP_SERVER, TARGET_PORT_SERVER, &send_addr);
+       if(0 > uv_ip4_addr(argv[1], port, &send_addr)) goto err;
        uv_udp_bind(&send_socket, (const struct sockaddr*)(&send_addr), 0);
+       MM_INFO("[ ok ] udp bind");
     } 
-    
     
     br_run();
 
     return 0;
+    
+ err:   
+    mss_info_error();
+    return 1;
 
 }
 
