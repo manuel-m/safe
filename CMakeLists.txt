@@ -17,8 +17,8 @@ macro_logall()
 include(MacroDefineCFlags)
 macro_define_cflags()
 
-include(MacroUseSad)
-macro_use_sad()
+# include(MacroUseSad)
+# macro_use_sad()
 
 include(MacroUseBr)
 macro_use_br()
@@ -26,8 +26,8 @@ macro_use_br()
 include(MacroUseMmtrace)
 macro_use_mmtrace()
 
-include(MacroUseSz)
-macro_use_sz()
+# include(MacroUseSz)
+# macro_use_sz()
 
 set(MSS_FILTER_DIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dist)
 file(MAKE_DIRECTORY ${MSS_FILTER_DIST_DIR})
@@ -42,15 +42,15 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
 
-add_executable (${MSS_FILTER_EXE} mss_filter.c )
+add_executable (${MSS_FILTER_EXE} sad.c mss_filter.c )
 
 
 target_link_libraries (${MSS_FILTER_EXE} ${BR_NET_UV_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${TT_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${UV_A} )
-target_link_libraries (${MSS_FILTER_EXE} ${SAD_A} )
+# target_link_libraries (${MSS_FILTER_EXE} ${SAD_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${HTTPPARSER_A} )
-target_link_libraries (${MSS_FILTER_EXE} ${SZ_A} )
+# target_link_libraries (${MSS_FILTER_EXE} ${SZ_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${MMTRACE_A} )
 target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt)
 
