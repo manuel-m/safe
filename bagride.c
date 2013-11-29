@@ -99,19 +99,6 @@ void br_udp_server_register(br_udp_server_t* udp_servers_, int size_) {
     }
 }
 
-void br_udp_clientKO_register(br_udp_client_t* udp_clients_, int size_) {
-    int i = 0;
-    for (i = 0; i < size_; i++) {
-        br_udp_client_t* client = &udp_clients_[i];     
-        MM_INFO("(%d) udp sending on %s:%d", i, client->m_addr, client->m_port);
-        uv_udp_init(uv_default_loop(), &client->m_handler);
-        
-        client->m_handler.data = client;
-        MM_ASSERT(0 == uv_ip4_addr(client->m_addr, client->m_port, &client->m_socketaddr));
-        MM_ASSERT(0 == uv_udp_bind(&client->m_handler, (const struct sockaddr*) &client->m_socketaddr, 0));      
-    }
-}
-
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
     if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) return -1;
