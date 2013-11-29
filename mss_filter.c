@@ -126,8 +126,8 @@ int main(int argc, char **argv) {
     
     if (sad_filter_init(&filter, on_ais_decoded, NULL)) goto err;
     
-    br_udp_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
-    br_http_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
+    br_udp_server_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
+    br_http_server_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
     
     /* register udp send */
     {
