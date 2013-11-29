@@ -1,0 +1,10 @@
+if [ $1 ]; then
+  if [ ${1}X==winX ]; then
+  make -f Makefile.mingw
+  exit 0
+  fi
+
+fi
+
+
+./autogen.sh && ./configure && make 

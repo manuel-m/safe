@@ -1,0 +1,2 @@
+if [ ! -d ./bin ]; then mkdir ./bin; fi 
+gcc -o ./bin/mss_filter -Isrc -Ilibs/libuv/include src/http_parser.c src/mmtrace.c src/sub0.c src/bagride.c src/sad.c src/mss_filter.c ./libs/libuv/.libs/libuv.a -lpthread -lrt
