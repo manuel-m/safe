@@ -73,14 +73,8 @@ static int on_ais_decoded(struct sad_filter_s * filter_){
             lat,
             lon,
             forward_sentence);
-	    
-	    uv_buf_t udp_sentence;
-	    uv_udp_send_t* send_req = (uv_udp_send_t*)calloc(1, sizeof(uv_udp_send_t));
-	    udp_sentence.base = (char*) strdup(forward_sentence);
-	    udp_sentence.len = sentence->n + 1;
-	    send_req->data = udp_sentence.base; /* no memory leak */
-	    uv_udp_send(send_req, &udp_client.m_handler, &udp_sentence, 1, 
-                    (const struct sockaddr *)&udp_client.m_socketaddr, on_send);                   
+            
+            br_udp_client_send(&udp_client, forward_sentence);
 	    
 	}
 

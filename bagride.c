@@ -121,14 +121,14 @@ int br_udp_client_register(br_udp_client_t* cli_) {
 }
 
 
-void br_udp_client_send(br_udp_client_t* client_, const char* forward_sentence_) {
+void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     uv_buf_t udp_sentence;
     uv_udp_send_t* send_req = (uv_udp_send_t*) calloc(1, sizeof (uv_udp_send_t));
-    udp_sentence.base = (char*) strdup(forward_sentence_);
-    udp_sentence.len = strlen(forward_sentence_) + 1;
+    udp_sentence.base = (char*) strdup(str_);
+    udp_sentence.len = strlen(str_) + 1;
     send_req->data = udp_sentence.base; /* no memory leak */
-    uv_udp_send(send_req, &client_->m_handler, &udp_sentence, 1, 
-            (const struct sockaddr *) &client_->m_socketaddr, on_udp_send);
+    uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1, 
+            (const struct sockaddr *) &cli_->m_socketaddr, on_udp_send);
 }
 
 /**
