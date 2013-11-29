@@ -26,8 +26,7 @@ static char forward_sentence[1024] = {0};
 
 br_udp_client_t udp_client;
 
-//static uv_udp_t send_socket;
-//static struct sockaddr_in send_addr;
+
 
 static void on_send(uv_udp_send_t* req_, int status){
   (void)status;
@@ -122,10 +121,14 @@ static void mss_info_error(void){
 int main(int argc, char **argv) { 
 
     if (3 != argc) goto err;
-    int port = atoi(argv[2]);
+//    int port = atoi(argv[2]);
+    
+    udp_client.m_port = atoi(argv[2]);
+    udp_client.m_addr = argv[1];
     
     
-    MM_INFO("init %s:%d", argv[1], port);  
+    
+    MM_INFO("init %s:%d", udp_client.m_addr, udp_client.m_port);  
     
     if (sad_filter_init(&filter, on_ais_decoded, NULL)) goto err;
     
@@ -135,7 +138,7 @@ int main(int argc, char **argv) {
     /* register udp send */
     {
        uv_udp_init(uv_default_loop(), &udp_client.m_handler);
-       if(0 > uv_ip4_addr(argv[1], port, &udp_client.m_socketaddr)) goto err;
+       if(0 > uv_ip4_addr(udp_client.m_addr, udp_client.m_port, &udp_client.m_socketaddr)) goto err;
        uv_udp_bind(&udp_client.m_handler, (const struct sockaddr*)(&udp_client.m_socketaddr), 0);
        MM_INFO("[ ok ] udp bind");
     } 
