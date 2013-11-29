@@ -20,8 +20,8 @@ macro_define_cflags()
 # include(MacroUseSad)
 # macro_use_sad()
 
-include(MacroUseBr)
-macro_use_br()
+include(MacroUseUv)
+macro_use_uv()
 
 include(MacroUseMmtrace)
 macro_use_mmtrace()
@@ -42,10 +42,10 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
 
-add_executable (${MSS_FILTER_EXE} sad.c mss_filter.c )
+add_executable (${MSS_FILTER_EXE} bagride.c sad.c mss_filter.c )
 
 
-target_link_libraries (${MSS_FILTER_EXE} ${BR_NET_UV_A} )
+#target_link_libraries (${MSS_FILTER_EXE} ${BR_NET_UV_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${TT_A} )
 target_link_libraries (${MSS_FILTER_EXE} ${UV_A} )
 # target_link_libraries (${MSS_FILTER_EXE} ${SAD_A} )
