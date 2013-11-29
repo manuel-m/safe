@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bagride.h"
+#include "sub0.h"
 #include "mmtrace.h"
 
 static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
@@ -107,6 +108,31 @@ int br_udp_client_register(br_udp_client_t* cli_) {
     return 0;
 }
 
+int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
+
+    br_udp_client_t* cli = &uc_->clients[uc_->i];
+    sub0_line_t line;
+    sub0_substring_t* sub = NULL;
+    sub0_line_prepare(target_, strlen(target_), ':', &line);
+
+    /* 1st field:addr */
+    sub = sub0_line_next_substring(&line);
+    if (NULL == sub && 0 == sub->n && NULL == sub->start) return -1;
+    if (BR_MAX_ADDR_SIZE < sub->n) return -1;
+
+    memcpy(cli->m_addr, sub->start, sub->n);
+    cli->m_addr[sub->n] = '\0';
+
+    /* 2nd field:port */
+    sub = sub0_line_next_substring(&line);
+    if (NULL == sub && 0 == sub->n && NULL == sub->start) return -1;
+    cli->m_port = atoi(sub->start);
+
+    if (0 > br_udp_client_register(cli)) return -1;
+    MM_INFO("init %s:%d", cli->m_addr, cli->m_port);
+    ++(uc_->i);
+}
+
 
 void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     uv_buf_t udp_sentence;
@@ -116,6 +142,26 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     send_req->data = udp_sentence.base; /* no memory leak */
     uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1, 
             (const struct sockaddr *) &cli_->m_socketaddr, on_udp_send);
+}
+
+void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_) {
+    br_udp_client_t* cli = uc_->clients;
+    size_t cli_i;
+    for (cli_i = 0; cli_i < uc_->n; cli_i++) {
+        br_udp_client_send(cli, str_);
+        ++cli;
+    }
+}
+            
+int br_udp_clients_init(br_udp_clients_t* uc_, size_t n_){
+    uc_->n = n_;
+    uc_->clients = (br_udp_client_t*)calloc(uc_->n, sizeof(br_udp_client_t));    
+    if(NULL == uc_->clients ) return -1;
+    return 0;
+    
+}
+void br_udp_clients_close(br_udp_clients_t* uc_){
+    free(uc_->clients);
 }
 
 /**

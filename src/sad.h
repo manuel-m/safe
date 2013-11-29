@@ -6,29 +6,11 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "sub0.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-        /**
-     * sub0 lib import
-     */
-    typedef struct sub0_substring_s {
-        const char* start;
-        const char* end;
-        size_t n;
-    } sub0_substring_t;
-
-    typedef struct sub0_line_s {
-        const char* p;
-        const char* start;
-        const char* sub_start;
-        int n;
-        const char* end;
-        sub0_substring_t sub;
-        char sep;
-    } sub0_line_t;
 
 #define AIVDM_ENABLE 1
 #define CHEAPFLOATS_ENABLE 1

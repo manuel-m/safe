@@ -14,6 +14,8 @@ extern "C" {
 #define br_udp_t uv_udp_t
     
 #define BR_MAX_CONNECTIONS 64
+#define BR_MAX_ADDR_SIZE 2048
+    
    
 /**
  * tcp
@@ -53,8 +55,20 @@ typedef struct br_udp_client_s {
     int m_port;
     br_udp_t m_handler;
     struct sockaddr_in m_socketaddr;
-    const char* m_addr;
+    char m_addr[BR_MAX_ADDR_SIZE];
+    
 } br_udp_client_t;
+
+typedef struct br_udp_clients_s {
+    size_t n; /* total len */
+    size_t i; /* current index */
+    br_udp_client_t* clients;
+} br_udp_clients_t;
+
+int br_udp_clients_init(br_udp_clients_t*, size_t);
+int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_);
+void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
+void br_udp_clients_close(br_udp_clients_t*);
 
 typedef int (*br_udp_server_parser_cb)(ssize_t nread_, const br_buf_t* pbuf_, 
         br_udp_server_t* pserver_);

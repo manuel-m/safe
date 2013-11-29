@@ -7,7 +7,7 @@
 #include "mmtrace.h"
 
 
-#define HELP_USAGE "usage: mss_filter addr port" 
+#define HELP_USAGE "usage: mss_filter addr:port addr:port ... addr:port" 
 #define UDP_AIS_PORT 9998
 #define HTTP_AIS_PORT 9997
 
@@ -23,14 +23,7 @@ static double y2 = 36.0;
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
-br_udp_client_t udp_client;
-
-static void on_send(uv_udp_send_t* req_, int status) {
-    (void) status;
-    char *base = (char*) req_->data;
-    free(base);
-    free(req_);
-}
+static br_udp_clients_t udp_clients = {0};
 
 static int on_ais_decoded(struct sad_filter_s * filter_) {
 
@@ -71,10 +64,8 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
                     lon,
                     forward_sentence);
 
-            br_udp_client_send(&udp_client, forward_sentence);
-
+            br_udp_clients_send(&udp_clients, forward_sentence);
         }
-
     }
     return 0;
 }
@@ -94,7 +85,6 @@ br_udp_server_t udp_servers[] = {
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
-
     return 0;
 }
 
@@ -111,26 +101,33 @@ static void mss_info_error(void) {
 
 int main(int argc, char **argv) {
 
-    if (3 != argc) goto err;
+    if (2 > argc) goto err;
+    if (0 > br_udp_clients_init(&udp_clients, argc - 1)) goto err;
 
-    udp_client.m_port = atoi(argv[2]);
-    udp_client.m_addr = argv[1];
+    MM_INFO("init %d udp clients\n", udp_clients.n);
 
-    MM_INFO("init %s:%d", udp_client.m_addr, udp_client.m_port);
+    int current_arg = 1;
+    do {
+        if( 0 > br_udp_clients_add(&udp_clients, argv[current_arg])) goto err;
+        ++current_arg;
+    } while (current_arg < argc);
 
     if (sad_filter_init(&filter, on_ais_decoded, NULL)) goto err;
 
     br_udp_server_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
     br_http_server_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
 
-    if (0 > br_udp_client_register(&udp_client)) goto err;
-
     br_run();
 
+    br_udp_clients_close(&udp_clients);
     return 0;
 
 err:
+
+    free(udp_clients.clients);
+    br_udp_clients_close(&udp_clients);
     mss_info_error();
+
     return 1;
 
 }
