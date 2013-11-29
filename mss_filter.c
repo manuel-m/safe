@@ -121,12 +121,9 @@ static void mss_info_error(void){
 int main(int argc, char **argv) { 
 
     if (3 != argc) goto err;
-//    int port = atoi(argv[2]);
     
     udp_client.m_port = atoi(argv[2]);
     udp_client.m_addr = argv[1];
-    
-    
     
     MM_INFO("init %s:%d", udp_client.m_addr, udp_client.m_port);  
     
@@ -135,13 +132,7 @@ int main(int argc, char **argv) {
     br_udp_server_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
     br_http_server_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
     
-    /* register udp send */
-    {
-       uv_udp_init(uv_default_loop(), &udp_client.m_handler);
-       if(0 > uv_ip4_addr(udp_client.m_addr, udp_client.m_port, &udp_client.m_socketaddr)) goto err;
-       uv_udp_bind(&udp_client.m_handler, (const struct sockaddr*)(&udp_client.m_socketaddr), 0);
-       MM_INFO("[ ok ] udp bind");
-    } 
+    if( 0 > br_udp_client_register(&udp_client)) goto err;
     
     br_run();
 

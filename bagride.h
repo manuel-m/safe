@@ -60,7 +60,7 @@ typedef int (*br_udp_server_parser_cb)(ssize_t nread_, const br_buf_t* pbuf_,
         br_udp_server_t* pserver_);
 
 void br_udp_server_register(br_udp_server_t* udp_servers_, int size_);
-void br_udp_client_register(br_udp_client_t* udp_clients_, int size_);
+int br_udp_client_register(br_udp_client_t* cli_);
 
 /**
  * http
