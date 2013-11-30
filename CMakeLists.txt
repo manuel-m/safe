@@ -20,6 +20,9 @@ macro_define_cflags()
 include(MacroUseUv)
 macro_use_uv()
 
+include(MacroUseLua)
+macro_use_lua()
+
 set(MSS_FILTER_DIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 file(MAKE_DIRECTORY ${MSS_FILTER_DIST_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${MSS_FILTER_DIST_DIR})
@@ -33,10 +36,16 @@ endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
 
 include_directories (src)
-add_executable (${MSS_FILTER_EXE} src/http_parser.c src/mmtrace.c src/sub0.c src/bagride.c src/sad.c src/mss_filter.c )
+add_executable (${MSS_FILTER_EXE} 
+src/http_parser.c 
+src/mmtrace.c 
+src/sub0.c 
+src/bagride.c 
+src/sad.c
+src/mss_filter.c )
 
-target_link_libraries (${MSS_FILTER_EXE} ${UV_A} )
-target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt)
+target_link_libraries (${MSS_FILTER_EXE} ${UV_A} ${LUA_A} )
+target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt -lm)
 
 
 

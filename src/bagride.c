@@ -54,11 +54,11 @@ static void on_udp_recv(uv_udp_t* stream_, ssize_t nread_, const uv_buf_t* read_
     free(read_buff_->base);
 }
 
-static void on_udp_send(uv_udp_send_t* req_, int status){
-  (void)status;
-  char *base = (char*) req_->data;
-  free(base);
-  free(req_);
+static void on_udp_send(uv_udp_send_t* req_, int status) {
+    (void) status;
+    char *base = (char*) req_->data;
+    free(base);
+    free(req_);
 }
 
 static void on_connect(uv_stream_t* pserver_, int status_) {
@@ -74,7 +74,7 @@ static void on_connect(uv_stream_t* pserver_, int status_) {
     }
 }
 
-void br_tcp_server_register(br_tcp_server_t* tcp_servers_, int size_){
+void br_tcp_server_register(br_tcp_server_t* tcp_servers_, int size_) {
     int i = 0;
     for (i = 0; i < size_; i++) {
         br_tcp_server_t* server = &tcp_servers_[i];
@@ -133,14 +133,13 @@ int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
     ++(uc_->i);
 }
 
-
 void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     uv_buf_t udp_sentence;
     uv_udp_send_t* send_req = (uv_udp_send_t*) calloc(1, sizeof (uv_udp_send_t));
     udp_sentence.base = (char*) strdup(str_);
     udp_sentence.len = strlen(str_) + 1;
     send_req->data = udp_sentence.base; /* no memory leak */
-    uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1, 
+    uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1,
             (const struct sockaddr *) &cli_->m_socketaddr, on_udp_send);
 }
 
@@ -152,16 +151,20 @@ void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_) {
         ++cli;
     }
 }
-            
-int br_udp_clients_init(br_udp_clients_t* uc_, size_t n_){
+
+int br_udp_clients_init(br_udp_clients_t* uc_, size_t n_) {
     uc_->n = n_;
-    uc_->clients = (br_udp_client_t*)calloc(uc_->n, sizeof(br_udp_client_t));    
-    if(NULL == uc_->clients ) return -1;
+    uc_->clients = (br_udp_client_t*) calloc(uc_->n, sizeof (br_udp_client_t));
+    if (NULL == uc_->clients) return -1;
     return 0;
-    
+
 }
-void br_udp_clients_close(br_udp_clients_t* uc_){
+
+void br_udp_clients_close(br_udp_clients_t* uc_) {
+    if (0 == uc_->n) return;
     free(uc_->clients);
+    uc_->n = 0;
+    uc_->clients = NULL;
 }
 
 /**
@@ -194,6 +197,7 @@ static int on_headers_complete(http_parser* parser) {
             on_http_after_write);
     return 1;
 }
+
 static void on_http_read(uv_stream_t* handle_, ssize_t nread_, const uv_buf_t* buf_) {
     size_t parsed;
     br_http_client_t* client = (br_http_client_t*) handle_->data;

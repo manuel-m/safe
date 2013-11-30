@@ -1,5 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+
 #include "uv.h"
 
 #include "sad.h"
@@ -7,23 +12,56 @@
 #include "mmtrace.h"
 
 
-#define HELP_USAGE "usage: mss_filter addr:port addr:port ... addr:port" 
+#define HELP_USAGE "usage: mss_filter cfg_file addr:port addr:port ... addr:port" 
 #define UDP_AIS_PORT 9998
 #define HTTP_AIS_PORT 9997
 
-
 static sad_filter_t filter;
 
-/* geographical filter */
-static double x1 = -16.0;
-static double y1 = 45.0;
-static double x2 = 9.0;
-static double y2 = 36.0;
+struct mss_config_s {
+    double x1, y1, x2, y2; /* geo filter */
+};
+
+static struct mss_config_s cfg = {0};
 
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static br_udp_clients_t udp_clients = {0};
+
+static int load_cfg(char *config_file_) {
+    int r = 0;
+    lua_State *L = luaL_newstate();
+    luaopen_base(L);
+    luaopen_io(L);
+    luaopen_string(L);
+    luaopen_math(L);
+
+    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0))
+        error(L, "cannot run configuration file: %s",
+            lua_tostring(L, -1));
+
+ #define MM_GETDOUBLE(NAME,VAR) \
+    lua_getglobal(L, #NAME);\
+    if (!lua_isnumber(L, -1)) {\
+        error(L, #NAME " should be a number\n");\
+        r = -1;\
+        goto end;\
+    }\
+    VAR = (double) lua_tonumber(L, -1);\
+    lua_pop(L, 1);
+
+    MM_GETDOUBLE(x1,cfg.x1)
+    MM_GETDOUBLE(x2,cfg.x2)
+    MM_GETDOUBLE(y1,cfg.y1)
+    MM_GETDOUBLE(y2,cfg.y2)
+            
+
+
+end:
+    lua_close(L);
+    return r;
+}
 
 static int on_ais_decoded(struct sad_filter_s * filter_) {
 
@@ -50,7 +88,7 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
         const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
         const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 
-        if (lon > x1 && lon < x2 && lat < y1 && lat > y2) {
+        if (lon > cfg.x1 && lon < cfg.x2 && lat < cfg.y1 && lat > cfg.y2) {
 
             strncpy(forward_sentence, sentence->start, sentence->n);
             forward_sentence[sentence->n] = '\n';
@@ -102,13 +140,16 @@ static void mss_info_error(void) {
 int main(int argc, char **argv) {
 
     if (2 > argc) goto err;
-    if (0 > br_udp_clients_init(&udp_clients, argc - 1)) goto err;
+    if (0 > br_udp_clients_init(&udp_clients, argc - 2)) goto err;
 
-    MM_INFO("init %d udp clients\n", udp_clients.n);
+    MM_INFO("load config %s", argv[1]);
+    if (0 > load_cfg(argv[1])) goto err;
 
-    int current_arg = 1;
+    MM_INFO("geofilter(%f,%f,%f,%f)", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
+
+    int current_arg = 2;
     do {
-        if( 0 > br_udp_clients_add(&udp_clients, argv[current_arg])) goto err;
+        if (0 > br_udp_clients_add(&udp_clients, argv[current_arg])) goto err;
         ++current_arg;
     } while (current_arg < argc);
 
