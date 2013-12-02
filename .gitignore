@@ -28,3 +28,4 @@ external_libs/libuv/test/.deps/
 lua-5.2.2/
 libuv/.libs
 libuv/autom4te.cache
+libs/libuv/

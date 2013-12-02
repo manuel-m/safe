@@ -131,6 +131,7 @@ int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
     if (0 > br_udp_client_register(cli)) return -1;
     MM_INFO("init %s:%d", cli->m_addr, cli->m_port);
     ++(uc_->i);
+    return 0;
 }
 
 void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {

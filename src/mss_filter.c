@@ -37,29 +37,30 @@ static int load_cfg(char *config_file_) {
     luaopen_string(L);
     luaopen_math(L);
 
-    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0))
-        error(L, "cannot run configuration file: %s",
-            lua_tostring(L, -1));
+    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)){
+        MM_ERR("cannot run configuration file: %s");
+    }
+//            lua_tostring(L, -1));
 
- #define MM_GETDOUBLE(NAME,VAR) \
+#define MM_GETDOUBLE(NAME,VAR) \
     lua_getglobal(L, #NAME);\
     if (!lua_isnumber(L, -1)) {\
-        error(L, #NAME " should be a number\n");\
+        MM_ERR(#NAME " should be a number\n");\
         r = -1;\
         goto end;\
     }\
     VAR = (double) lua_tonumber(L, -1);\
     lua_pop(L, 1);
 
-    MM_GETDOUBLE(x1,cfg.x1)
-    MM_GETDOUBLE(x2,cfg.x2)
-    MM_GETDOUBLE(y1,cfg.y1)
-    MM_GETDOUBLE(y2,cfg.y2)
-            
+    MM_GETDOUBLE(x1, cfg.x1)
+    MM_GETDOUBLE(x2, cfg.x2)
+    MM_GETDOUBLE(y1, cfg.y1)
+    MM_GETDOUBLE(y2, cfg.y2)
 
 
-end:
-    lua_close(L);
+
+    end :
+            lua_close(L);
     return r;
 }
 

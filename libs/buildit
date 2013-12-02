@@ -6,7 +6,7 @@ LIBLUA_ID=lua-5.2.2
 ROOT_PWD=$(pwd)
 
 #libuv
-if [ -d ${LIBUV_ID} ]; then rm -rf ${LIBUV_ID};fi
+if [ ! -d ${LIBUV_ID} ]; then rm -rf ${LIBUV_ID};fi
 tar xvfz ${LIBUV_ID}.tgz
 cd libuv
 

@@ -65,10 +65,9 @@ clean:
 	
 .PHONY: external_libs
 external_libs:
-	@ cd ../bagride; make
-	@ cd ../sad; make	
+	@ cd libs && ./buildit
 	
-check: external_libs
+check: 
 	@ [ -d $(RELEASE_DIR) ] || ./configure
 	
 .PHONY: archive
@@ -85,4 +84,6 @@ PROJECT_DIR=$(pwd)
 f_cmake_arbo
 f_cmake_configure
 f_top_makefile
+cd ${PROJECT_DIR}
 
+make -f Makefile external_libs
