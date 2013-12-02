@@ -1,0 +1,33 @@
+#!/bin/bash
+
+LIBUV_ID=libuv_131201
+LIBLUA_ID=lua-5.2.2
+
+ROOT_PWD=$(pwd)
+
+#libuv
+if [ -d ${LIBUV_ID} ]; then rm -rf ${LIBUV_ID};fi
+tar xvfz ${LIBUV_ID}.tgz
+cd libuv
+
+if [ $1 ]; then
+  if [ ${1}X==winX ]; then
+  make -f Makefile.mingw
+  exit 0
+  fi
+fi
+
+
+./autogen.sh && ./configure && make 
+
+#liblua
+cd ${ROOT_PWD}
+if [ -d ${LIBLUA_ID} ]; then rm -rf ${LIBLUA_ID};fi
+tar xvfz ${LIBLUA_ID}.tgz
+cd ${LIBLUA_ID}
+make linux 
+
+cd ${ROOT_PWD}
+
+
+
