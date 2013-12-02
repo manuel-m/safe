@@ -25,3 +25,6 @@ external_libs/libuv/config.status
 external_libs/libuv/configure
 external_libs/libuv/libtool
 external_libs/libuv/test/.deps/
+lua-5.2.2/
+libuv/.libs
+libuv/autom4te.cache
