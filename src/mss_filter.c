@@ -11,16 +11,38 @@
 #include "bagride.h"
 #include "mmtrace.h"
 
-
 #define HELP_USAGE "usage: mss_filter cfg_file addr:port addr:port ... addr:port" 
-#define UDP_AIS_PORT 9998
-#define HTTP_AIS_PORT 9997
+
 
 static sad_filter_t filter;
+
+static int on_stats_response(br_http_client_t* cli_) {
+    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
+    return 0;
+}
+
+static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
+    (void) pserver_;
+    sad_decode_multiline(&filter, inbuf_->base, nread_);
+    return 0;
+}
 
 struct mss_config_s {
     double x1, y1, x2, y2; /* geo filter */
 };
+
+static br_http_server_t http_servers[] = {
+    {
+        .m_gen_response_cb = on_stats_response
+    },
+};
+
+br_udp_server_t udp_servers[] = {
+    {
+        .m_user_parse_cb = on_udp_parse
+    },
+};
+
 
 static struct mss_config_s cfg = {0};
 
@@ -42,6 +64,35 @@ static int load_cfg(char *config_file_) {
         r = -1;goto end;
     }
     
+     /*
+     * ais_in_udp_port
+     */
+    lua_getglobal(L, "ais_udp_in_port");
+    if (!lua_isnumber(L, -1)) {
+        MM_ERR("ais_udp_in_port" " should be a number\n");
+        r = -1; goto end;
+    }
+    udp_servers[0].m_port = (int) lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    
+    /*
+     * http server port
+     */
+    lua_getglobal(L, "admin_http_port");
+    if (!lua_isnumber(L, -1)) {
+        MM_ERR("admin_http_port" " should be a number\n");
+        r = -1; goto end;
+    }
+    http_servers[0].m_port = (int) lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    
+    
+    /*
+     * geofilter dataget
+     */
+    
     lua_getglobal(L,"geofilter");
     if(!lua_istable(L,-1)){
         r = -1; goto end;
@@ -51,19 +102,18 @@ static int load_cfg(char *config_file_) {
     lua_getfield(L, -1, #NAME);\
     if (!lua_isnumber(L, -1)) {\
         MM_ERR(#NAME " should be a number\n");\
-        r = -1;\
-        goto end;\
+        r = -1; goto end;\
     }\
     VAR = (double) lua_tonumber(L, -1);\
     lua_pop(L, 1);    
-    
 
     MM_GETDOUBLE(x1, cfg.x1)
     MM_GETDOUBLE(x2, cfg.x2)
     MM_GETDOUBLE(y1, cfg.y1)
     MM_GETDOUBLE(y2, cfg.y2)
 
-
+#undef MM_GETDOUBLE
+    
 
     end:
             lua_close(L);
@@ -115,30 +165,13 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
     return 0;
 }
 
-static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
-    (void) pserver_;
-    sad_decode_multiline(&filter, inbuf_->base, nread_);
-    return 0;
-}
 
-br_udp_server_t udp_servers[] = {
-    {
-        .m_port = UDP_AIS_PORT,
-        .m_user_parse_cb = on_udp_parse
-    },
-};
 
-static int on_stats_response(br_http_client_t* cli_) {
-    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
-    return 0;
-}
 
-br_http_server_t http_servers[] = {
-    {
-        .m_port = HTTP_AIS_PORT,
-        .m_gen_response_cb = on_stats_response
-    },
-};
+
+
+
+
 
 static void mss_info_error(void) {
     printf(HELP_USAGE "\n");
