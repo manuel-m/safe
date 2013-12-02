@@ -39,18 +39,24 @@ static int load_cfg(char *config_file_) {
 
     if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)){
         MM_ERR("cannot run configuration file: %s");
+        r = -1;goto end;
     }
-//            lua_tostring(L, -1));
-
+    
+    lua_getglobal(L,"geofilter");
+    if(!lua_istable(L,-1)){
+        r = -1; goto end;
+    }
+    
 #define MM_GETDOUBLE(NAME,VAR) \
-    lua_getglobal(L, #NAME);\
+    lua_getfield(L, -1, #NAME);\
     if (!lua_isnumber(L, -1)) {\
         MM_ERR(#NAME " should be a number\n");\
         r = -1;\
         goto end;\
     }\
     VAR = (double) lua_tonumber(L, -1);\
-    lua_pop(L, 1);
+    lua_pop(L, 1);    
+    
 
     MM_GETDOUBLE(x1, cfg.x1)
     MM_GETDOUBLE(x2, cfg.x2)
@@ -59,7 +65,7 @@ static int load_cfg(char *config_file_) {
 
 
 
-    end :
+    end:
             lua_close(L);
     return r;
 }
