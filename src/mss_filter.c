@@ -16,31 +16,10 @@
 
 static sad_filter_t filter;
 
-static int on_stats_response(br_http_client_t* cli_) {
-    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
-    return 0;
-}
-
-static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
-    (void) pserver_;
-    sad_decode_multiline(&filter, inbuf_->base, nread_);
-    return 0;
-}
-
 struct mss_config_s {
+    int ais_udp_in_port;
+    int admin_http_port;
     double x1, y1, x2, y2; /* geo filter */
-};
-
-static br_http_server_t http_servers[] = {
-    {
-        .m_gen_response_cb = on_stats_response
-    },
-};
-
-br_udp_server_t udp_servers[] = {
-    {
-        .m_user_parse_cb = on_udp_parse
-    },
 };
 
 
@@ -59,65 +38,82 @@ static int load_cfg(char *config_file_) {
     luaopen_string(L);
     luaopen_math(L);
 
-    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)){
+    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)) {
         MM_ERR("cannot run configuration file: %s");
-        r = -1;goto end;
+        r = -1;
+        goto end;
     }
-    
-     /*
+
+#define MM_GETINT_FROMG(NAME) \
+    lua_getglobal(L, #NAME);\
+    if (!lua_isnumber(L, -1)) {\
+        MM_ERR(#NAME " should be a number\n");\
+        r = -1; goto end;\
+    }\
+    cfg.NAME = (int) lua_tonumber(L, -1);\
+    lua_pop(L, 1);     
+
+    /*
      * ais_in_udp_port
      */
-    lua_getglobal(L, "ais_udp_in_port");
-    if (!lua_isnumber(L, -1)) {
-        MM_ERR("ais_udp_in_port" " should be a number\n");
-        r = -1; goto end;
-    }
-    udp_servers[0].m_port = (int) lua_tonumber(L, -1);
-    lua_pop(L, 1);
-    
-    
+    MM_GETINT_FROMG(ais_udp_in_port);
+
     /*
-     * http server port
+     * admin_http_port
      */
-    lua_getglobal(L, "admin_http_port");
-    if (!lua_isnumber(L, -1)) {
-        MM_ERR("admin_http_port" " should be a number\n");
-        r = -1; goto end;
-    }
-    http_servers[0].m_port = (int) lua_tonumber(L, -1);
-    lua_pop(L, 1);
-    
-    
-    
+    MM_GETINT_FROMG(admin_http_port);
+
     /*
-     * geofilter dataget
+     * geofilter 
      */
-    
-    lua_getglobal(L,"geofilter");
-    if(!lua_istable(L,-1)){
-        r = -1; goto end;
+    lua_getglobal(L, "geofilter");
+    if (!lua_istable(L, -1)) {
+        r = -1;
+        goto end;
     }
-    
-#define MM_GETDOUBLE(NAME,VAR) \
+
+#define MM_GETDOUBLE_FROMTABLE(NAME) \
     lua_getfield(L, -1, #NAME);\
     if (!lua_isnumber(L, -1)) {\
         MM_ERR(#NAME " should be a number\n");\
         r = -1; goto end;\
     }\
-    VAR = (double) lua_tonumber(L, -1);\
+    cfg.NAME = (double) lua_tonumber(L, -1);\
     lua_pop(L, 1);    
 
-    MM_GETDOUBLE(x1, cfg.x1)
-    MM_GETDOUBLE(x2, cfg.x2)
-    MM_GETDOUBLE(y1, cfg.y1)
-    MM_GETDOUBLE(y2, cfg.y2)
+    MM_GETDOUBLE_FROMTABLE(x1)
+    MM_GETDOUBLE_FROMTABLE(x2)
+    MM_GETDOUBLE_FROMTABLE(y1)
+    MM_GETDOUBLE_FROMTABLE(y2)
 
-#undef MM_GETDOUBLE
+#undef MM_GETDOUBLE_FROMTABLE
+
+    /*
+     * out_filter 
+     */
+    lua_getglobal(L, "out_filter");
+    if (!lua_istable(L, -1)) {
+        r = -1;
+        goto end;
+    }    
+    
+         
     
 
-    end:
+    end :
             lua_close(L);
     return r;
+}
+
+static int on_stats_response(br_http_client_t* cli_) {
+    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
+    return 0;
+}
+
+static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
+    (void) pserver_;
+    sad_decode_multiline(&filter, inbuf_->base, nread_);
+    return 0;
 }
 
 static int on_ais_decoded(struct sad_filter_s * filter_) {
@@ -138,7 +134,6 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
 #endif            
             return 0;
         }
-
         strncpy(last_sentence, sentence->start, sentence->n);
         last_sentence[sentence->n + 1] = '0';
 
@@ -165,51 +160,48 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
     return 0;
 }
 
-
-
-
-
-
-
-
-
 static void mss_info_error(void) {
     printf(HELP_USAGE "\n");
 }
 
+static br_http_server_t http_server = {.m_gen_response_cb = on_stats_response};
+static br_udp_server_t udp_server = {.m_user_parse_cb = on_udp_parse};
+
 int main(int argc, char **argv) {
+    int r = 0;
 
-    if (2 > argc) goto err;
-    if (0 > br_udp_clients_init(&udp_clients, argc - 2)) goto err;
+#define MM_GERR { r=-1;mss_info_error();goto end;}
 
-    MM_INFO("load config %s", argv[1]);
-    if (0 > load_cfg(argv[1])) goto err;
+    if (2 > argc) MM_GERR
+        if (0 > br_udp_clients_init(&udp_clients, argc - 2)) MM_GERR
 
-    MM_INFO("geofilter(%f,%f,%f,%f)", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
+            MM_INFO("config %s", argv[1]);
+    if (0 > load_cfg(argv[1])) MM_GERR
+
+        MM_INFO("geofilter(%f,%f,%f,%f)", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
 
     int current_arg = 2;
     do {
-        if (0 > br_udp_clients_add(&udp_clients, argv[current_arg])) goto err;
-        ++current_arg;
+        if (0 > br_udp_clients_add(&udp_clients, argv[current_arg])) MM_GERR
+                ++current_arg;
     } while (current_arg < argc);
 
-    if (sad_filter_init(&filter, on_ais_decoded, NULL)) goto err;
+    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR
 
-    br_udp_server_register(udp_servers, sizeof (udp_servers) / sizeof (br_udp_server_t));
-    br_http_server_register(http_servers, sizeof (http_servers) / sizeof (br_http_server_t));
+    udp_server.m_port = cfg.ais_udp_in_port;
+    br_udp_server_register(&udp_server, 1);
+
+    http_server.m_port = cfg.admin_http_port;
+    br_http_server_register(&http_server, 1);
 
     br_run();
 
+#undef MM_GERR
+
+end:
     br_udp_clients_close(&udp_clients);
-    return 0;
 
-err:
-
-    free(udp_clients.clients);
-    br_udp_clients_close(&udp_clients);
-    mss_info_error();
-
-    return 1;
+    return r;
 
 }
 
