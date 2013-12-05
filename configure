@@ -63,10 +63,6 @@ clean:
 	@ cd $(RELEASE_DIR); make -s clean
 	@ cd $(DEBUG_DIR); make -s clean
 	
-.PHONY: external_libs
-external_libs:
-	@ cd libs && ./buildit
-	
 check: 
 	@ [ -d $(RELEASE_DIR) ] || ./configure
 	
@@ -86,4 +82,3 @@ f_cmake_configure
 f_top_makefile
 cd ${PROJECT_DIR}
 
-make -f Makefile external_libs
