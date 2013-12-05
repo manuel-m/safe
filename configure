@@ -47,8 +47,11 @@ f_top_makefile()
     
   cat >> ${GMAKEFILE} << "EOF"
 
-main: release debug
+main: release debug 
 
+install: release
+	@ cd $(RELEASE_DIR); make install -s 
+	
 release: check
 	@ cd $(RELEASE_DIR); make -s 
 	

@@ -48,5 +48,8 @@ target_link_libraries (${MSS_FILTER_EXE} ${UV_A} ${LUA_A} )
 target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt -lm)
 
 
+if (CMAKE_BUILD_TYPE MATCHES Release)
+   install(TARGETS ${MSS_FILTER_EXE} DESTINATION bin)
+endif (CMAKE_BUILD_TYPE MATCHES Release)
 
 
