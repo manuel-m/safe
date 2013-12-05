@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# chkconfig: 2345 85 15
+# description: Starts and stops mss_filter
+
+# Source function library.
+if [ -f /etc/rc.d/functions ];
+then
+    . /etc/init.d/functions
+fi
+
+MEXE=/usr/local/bin/mss_filter
+MCONF=/etc/mss_filter/mss_config.lua
+MTGT="l8:9990"
+MLOG=/var/log/mss_filter.log
+
+status()
+{
+        netstat -plunt | grep $(basename ${MEXE})      
+}
+
+
+start()
+{
+        nohup ${MEXE} ${MCONF} ${MTGT} > ${MLOG} &
+}
+
+stop()
+{
+        killall mss_filter -9
+        
+}
+
+restart()
+{
+        stop
+        start
+}
+
+# See how we were called.
+case "$1" in
+  status)
+        status
+        ;;
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|reload)
+        restart
+        ;;
+  *)
+        echo $"Usage: service mss {start|stop|restart|status}"
+        exit 1
+esac
+
