@@ -16,17 +16,37 @@ mmerr = function (str)
   print(str)
   os.exit(1)
 end
--- [mmgen_api] -------------------------------------------------------------------
-function mmgen_api()
+-- [mmgen_api_c] -------------------------------------------------------------------
+function mmgen_api_c()
+  
+  local filename_c = mmapi_m.dirname .. "/" .. mmapi_m.basename ..".c";
+  local f_c = io.open (filename_c,"w")
+  local api_t = "struct " .. mmapi_m.basename .. "_s";  
+
+-- c header
+  f_c:write([[#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+]])
+  f_c:write("#include \"" .. mmapi_m.basename .. ".h\" \n")
+  f_c:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "* cfg_,const char* f_){ (void)cfg_;(void)f_;return 1;}\n")
+      
+  f_c:close()
+  
+  print("[INFO] " .. filename_c .. " generated")
+   
+end
+
+-- [mmgen_api_h] -------------------------------------------------------------------
+function mmgen_api_h()
   
 -- struct
   local api_t = "struct " .. mmapi_m.basename .. "_s";
   
 -- open files
   local filename_h = mmapi_m.dirname .. "/" .. mmapi_m.basename ..".h";
-  local filename_c = mmapi_m.dirname .. "/" .. mmapi_m.basename ..".c";
   local f_h = io.open (filename_h,"w")
-  local f_c = io.open (filename_c,"w")
 
 -- h header  
   f_h:write("#ifndef " .. mmapi_m.define .. "\n")
@@ -57,15 +77,6 @@ extern "C" {
 
   f_h:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "*,const char*);\n")
   
--- c header
-  f_c:write([[#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
-]])
-  f_c:write("#include \"" .. mmapi_m.basename .. ".h\" \n")
-  f_c:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "* cfg_,const char* f_){ (void)cfg_;(void)f_;return 1;}\n")
-      
 -- h footer      
   f_h:write([[      
     
@@ -79,12 +90,12 @@ extern "C" {
 
 -- close files
   f_h:close()
-  f_c:close()
   
   print("[INFO] " .. filename_h .. " generated")
-  print("[INFO] " .. filename_c .. " generated")
    
 end
+
+
 
 -- [ main ] --------------------------------------------------------------------
 if not arg[1] then mmerr(mmerrs.missing_argument) end
@@ -103,7 +114,8 @@ if not mmapi_m.define then mmerr(mmerrs.missing_api_define) end
 if not mmapi then mmerr(mmerrs.missing_api) end
 
 
-mmgen_api()
+mmgen_api_h()
+mmgen_api_c()
 
 
 
