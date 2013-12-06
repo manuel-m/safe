@@ -52,7 +52,8 @@ static int load_cfg(char *config_file_) {
         r = -1; goto end;\
     }\
     cfg.NAME = (int) lua_tonumber(L, -1);\
-    lua_pop(L, 1);     
+    lua_pop(L, 1);\
+    MM_INFO(#NAME "=%d", cfg.NAME);
 
     MM_GETINT_FROMG(ais_udp_in_port);
     MM_GETINT_FROMG(admin_http_port);
@@ -178,6 +179,7 @@ int main(int argc, char **argv) {
 
     if (1 > argc) MM_GERR;
 
+    MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
     if (0 > load_cfg(argv[1])) MM_GERR;
 
