@@ -117,7 +117,7 @@ int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
 
     /* 1st field:addr */
     sub = sub0_line_next_substring(&line);
-    if (NULL == sub && 0 == sub->n && NULL == sub->start) return -1;
+    if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
     if (BR_MAX_ADDR_SIZE < sub->n) return -1;
 
     memcpy(cli->m_addr, sub->start, sub->n);
@@ -125,7 +125,7 @@ int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
 
     /* 2nd field:port */
     sub = sub0_line_next_substring(&line);
-    if (NULL == sub && 0 == sub->n && NULL == sub->start) return -1;
+    if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
     cli->m_port = atoi(sub->start);
 
     if (0 > br_udp_client_register(cli)) return -1;
