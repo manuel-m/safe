@@ -78,7 +78,7 @@ void br_tcp_server_register(br_tcp_server_t* tcp_servers_, int size_) {
     int i = 0;
     for (i = 0; i < size_; i++) {
         br_tcp_server_t* server = &tcp_servers_[i];
-        MM_INFO("(%d) tcp listening on port %d", i, server->m_port);
+        MM_INFO("(%d) tcp in %d", i, server->m_port);
         uv_tcp_init(uv_default_loop(), &server->m_handler);
         server->m_handler.data = server;
         MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
@@ -91,7 +91,7 @@ void br_udp_server_register(br_udp_server_t* udp_servers_, int size_) {
     int i = 0;
     for (i = 0; i < size_; i++) {
         br_udp_server_t* server = &udp_servers_[i];
-        MM_INFO("(%d) udp listening on port %d", i, server->m_port);
+        MM_INFO("(%d) udp in %d", i, server->m_port);
         uv_udp_init(uv_default_loop(), &server->m_handler);
         server->m_handler.data = server;
         MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
@@ -102,9 +102,11 @@ void br_udp_server_register(br_udp_server_t* udp_servers_, int size_) {
 
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
-    if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) return -1;
+    if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)){
+      MM_ERR("bind %s:%d",cli_->m_addr, cli_->m_port);
+      return -1;
+    }
     uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
-    MM_INFO("[ ok ] udp bind");
     return 0;
 }
 
@@ -129,7 +131,6 @@ int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
     cli->m_port = atoi(sub->start);
 
     if (0 > br_udp_client_register(cli)) return -1;
-    MM_INFO("init %s:%d", cli->m_addr, cli->m_port);
     ++(uc_->i);
     return 0;
 }
@@ -249,7 +250,7 @@ void br_http_server_register(br_http_server_t* servers_, int size_) {
     for (i = 0; i < size_; i++) {
         br_http_server_t* server = &servers_[i];
         server->m_parser_settings.on_headers_complete = on_headers_complete;
-        MM_INFO("(%d) http listening on port %d", i, server->m_port);
+        MM_INFO("(%d) http in %d", i, server->m_port);
         uv_tcp_init(uv_default_loop(), &server->m_handler);
         server->m_handler.data = server;
         MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_addr));

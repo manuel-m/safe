@@ -11,7 +11,7 @@
 #include "bagride.h"
 #include "mmtrace.h"
 
-#define HELP_USAGE "usage: mss_filter cfg_file addr:port addr:port ... addr:port" 
+#define HELP_USAGE "usage: mss_filter cfg_file" 
 
 
 static sad_filter_t filter;
@@ -37,11 +37,12 @@ static int load_cfg(char *config_file_) {
     luaopen_io(L);
     luaopen_string(L);
     luaopen_math(L);
+    
+#define MM_GERR { r=-1;goto end;}    
 
     if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)) {
         MM_ERR("cannot run configuration file: %s");
-        r = -1;
-        goto end;
+	MM_GERR;
     }
 
 #define MM_GETINT_FROMG(NAME) \
@@ -53,24 +54,13 @@ static int load_cfg(char *config_file_) {
     cfg.NAME = (int) lua_tonumber(L, -1);\
     lua_pop(L, 1);     
 
-    /*
-     * ais_in_udp_port
-     */
     MM_GETINT_FROMG(ais_udp_in_port);
-
-    /*
-     * admin_http_port
-     */
     MM_GETINT_FROMG(admin_http_port);
 
-    /*
-     * geofilter 
-     */
+    /* geofilter */
+    {
     lua_getglobal(L, "geofilter");
-    if (!lua_istable(L, -1)) {
-        r = -1;
-        goto end;
-    }
+    if (!lua_istable(L, -1)) MM_GERR;
 
 #define MM_GETDOUBLE_FROMTABLE(NAME) \
     lua_getfield(L, -1, #NAME);\
@@ -87,22 +77,36 @@ static int load_cfg(char *config_file_) {
     MM_GETDOUBLE_FROMTABLE(y2)
 
 #undef MM_GETDOUBLE_FROMTABLE
+    }
 
-    /*
-     * out_filter 
-     */
-    lua_getglobal(L, "out_filter");
-    if (!lua_istable(L, -1)) {
-        r = -1;
-        goto end;
-    }    
+    /* out udp */
+    {
+    int out_idx=1;
+    lua_getglobal(L, "ais_out_udp");
+    if (!lua_istable(L, -1)) MM_GERR;
+    int n = luaL_len(L, -1);
     
-         
+    if (0 > br_udp_clients_init(&udp_clients, n)) MM_GERR;
     
+    lua_pushnil(L);
+
+    while(lua_next(L, -2)) {  
+      if(lua_isstring(L, -1)) {
+          const char* s = lua_tostring(L, -1);
+          if (0 > br_udp_clients_add(&udp_clients, s)) MM_GERR;
+	  MM_INFO("ais_out_udp[%d]=\"%s\"", out_idx,s);
+      }
+      ++out_idx;
+      lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    }
 
     end :
             lua_close(L);
     return r;
+    
+#undef MM_GERR
 }
 
 static int on_stats_response(br_http_client_t* cli_) {
@@ -172,21 +176,14 @@ int main(int argc, char **argv) {
 
 #define MM_GERR { r=-1;mss_info_error();goto end;}
 
-    if (2 > argc) MM_GERR
-        if (0 > br_udp_clients_init(&udp_clients, argc - 2)) MM_GERR
+    if (1 > argc) MM_GERR;
 
-            MM_INFO("config %s", argv[1]);
-    if (0 > load_cfg(argv[1])) MM_GERR
+    MM_INFO("config=\"%s\"", argv[1]);
+    if (0 > load_cfg(argv[1])) MM_GERR;
 
-        MM_INFO("geofilter(%f,%f,%f,%f)", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
+    MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
 
-    int current_arg = 2;
-    do {
-        if (0 > br_udp_clients_add(&udp_clients, argv[current_arg])) MM_GERR
-                ++current_arg;
-    } while (current_arg < argc);
-
-    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR
+    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
 
     udp_server.m_port = cfg.ais_udp_in_port;
     br_udp_server_register(&udp_server, 1);

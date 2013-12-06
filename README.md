@@ -9,8 +9,10 @@ External libraries sources have been included (lua,libuv,http-parser)
 
 build instructions
 ==================
- 
- ./bootstrap && ./configure && make release
+./bootstrap && ./configure && make release
  
 
+usage
+=====
 
+mss_filter ./mss_config.lua
