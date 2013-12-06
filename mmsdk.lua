@@ -31,6 +31,7 @@ function mmgen_api_c()
 ]])
   f_c:write("#include \"" .. mmapi_m.basename .. ".h\" \n")
   f_c:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "* cfg_,const char* f_){ (void)cfg_;(void)f_;return 1;}\n")
+  f_c:write("int " .. mmapi_m.basename .. "_default(const char* f_){(void)f_;return 1;}\n")
       
   f_c:close()
   
@@ -76,6 +77,7 @@ extern "C" {
   f_h:write("};\n" );
 
   f_h:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "*,const char*);\n")
+  f_h:write("int " .. mmapi_m.basename .. "_default(const char* f_);\n")
   
 -- h footer      
   f_h:write([[      
