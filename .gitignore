@@ -1,5 +1,4 @@
 /bin/
-/dist/
 Makefile
 http-parser.dir
 CMakeCache.txt
@@ -15,17 +14,9 @@ gmon.out
 *.la
 nbproject
 /build/
-external_libs/libhttp-parser/Makefile
-external_libs/libuv/.libs/
-external_libs/libuv/Makefile
-external_libs/libuv/Makefile.in
-external_libs/libuv/aclocal.m4
-external_libs/libuv/autom4te.cache/
-external_libs/libuv/config.status
-external_libs/libuv/configure
-external_libs/libuv/libtool
-external_libs/libuv/test/.deps/
 lua-5.2.2/
 libuv/.libs
 libuv/autom4te.cache
 libs/libuv/
+src/mss_filter_config.c
+src/mss_filter_config.h

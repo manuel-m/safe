@@ -36,7 +36,7 @@ static int load_cfg(char *config_file_) {
     luaopen_base(L);
     luaopen_io(L);
     luaopen_string(L);
-    luaopen_math(L);
+//     luaopen_math(L);
     
 #define MM_GERR { r=-1;goto end;}    
 

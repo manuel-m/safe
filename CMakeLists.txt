@@ -42,6 +42,7 @@ src/mmtrace.c
 src/sub0.c 
 src/bagride.c 
 src/sad.c
+src/mss_filter_config.c
 src/mss_filter.c )
 
 target_link_libraries (${MSS_FILTER_EXE} ${UV_A} ${LUA_A} )
