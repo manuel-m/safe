@@ -34,9 +34,6 @@ static int load_cfg(char *config_file_) {
     int r = 0;
     lua_State *L = luaL_newstate();
     luaopen_base(L);
-    luaopen_io(L);
-    luaopen_string(L);
-//     luaopen_math(L);
     
 #define MM_GERR { r=-1;goto end;}    
 
@@ -49,7 +46,7 @@ static int load_cfg(char *config_file_) {
     lua_getglobal(L, #NAME);\
     if (!lua_isnumber(L, -1)) {\
         MM_ERR(#NAME " should be a number\n");\
-        r = -1; goto end;\
+        MM_GERR;\
     }\
     cfg.NAME = (int) lua_tonumber(L, -1);\
     lua_pop(L, 1);\
@@ -67,7 +64,7 @@ static int load_cfg(char *config_file_) {
     lua_getfield(L, -1, #NAME);\
     if (!lua_isnumber(L, -1)) {\
         MM_ERR(#NAME " should be a number\n");\
-        r = -1; goto end;\
+        MM_GERR;\
     }\
     cfg.NAME = (double) lua_tonumber(L, -1);\
     lua_pop(L, 1);    

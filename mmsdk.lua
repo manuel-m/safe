@@ -28,9 +28,49 @@ function mmgen_api_c()
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "mmtrace.h"
+
 ]])
   f_c:write("#include \"" .. mmapi_m.basename .. ".h\" \n")
-  f_c:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "* cfg_,const char* f_){ (void)cfg_;(void)f_;return 1;}\n")
+  
+-- c load config function  
+  f_c:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "* cfg_,const char* f_)\n{\n")
+  f_c:write([[
+    lua_State *L = luaL_newstate();
+    luaopen_base(L);
+    if (luaL_loadfile(L, f_) || lua_pcall(L, 0, 0, 0)) {
+        MM_ERR("cannot run configuration file: %s",f_);
+        return 1;
+    }
+]])
+-- iter on params
+    for n,v in pairs(mmapi) do
+        if (type(v) == 'table') then
+            f_c:write("    /* table TODO */\n")
+        else  
+            f_c:write("    /* " .. n .. " */\n    {\n")
+              
+            -- numbers only 
+            if(v == 'int' or v == 'double' or v == 'float') then
+                f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");
+                f_c:write("        if (!lua_isnumber(L, -1)) {\n");
+                f_c:write("            MM_ERR(\" .. n ..  should be a number\");\n");
+                f_c:write("            return 1;\n")
+                f_c:write("        }\n")        
+                f_c:write("        cfg_->" .. n .. " = (" .. v .. ") lua_tonumber(L, -1);\n")
+                f_c:write("        lua_pop(L, 1);\n")
+                f_c:write("        MM_INFO(\"" .. n .. "=%d\", cfg_->".. n .. ");")      
+            end
+        f_c:write("\n    }\n")
+        end
+    end
+
+  f_c:write([[
+    return 0;
+}
+]])
+  
+  
   f_c:write("int " .. mmapi_m.basename .. "_default(const char* f_){(void)f_;return 1;}\n")
       
   f_c:close()
