@@ -45,24 +45,48 @@ function mmgen_api_c()
 ]])
 -- iter on params
     for n,v in pairs(mmapi) do
+      
+        f_c:write("    /* " .. n .. " */\n    {\n")
+        f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");          
+          
         if (type(v) == 'table') then
-            f_c:write("    /* table TODO */\n")
+          
+                f_c:write("        if (!lua_istable(L, -1)) {\n")
+                f_c:write("            MM_ERR(\"" .. n .. " is not a table\");\n");
+                f_c:write("            return 1;\n")
+                f_c:write("        }\n")
+                
+                -- iter on all table keys
+                for n2,v2 in pairs(v) do
+                    f_c:write("        lua_getfield(L, -1, \"" ..  n2 .. "\");\n")
+                    
+                    -- numbers
+                    if(v2 == 'int' or v2 == 'double' or v2 == 'float') then
+                        f_c:write("        if (!lua_isnumber(L, -1)) {\n")
+                        f_c:write("            MM_ERR(\""..n .."." .. n2 .. " should be a number\");\n")
+                        f_c:write("            return 1;\n")
+                        f_c:write("        }\n")                   
+                        f_c:write("        cfg_->" .. n .. "." .. n2 .." = (".. v2 .. ") lua_tonumber(L, -1);\n")
+                        f_c:write("        lua_pop(L, 1);\n")
+                    end
+              end        
+                
+        -- not table  
         else  
-            f_c:write("    /* " .. n .. " */\n    {\n")
               
-            -- numbers only 
+            -- numbers  
             if(v == 'int' or v == 'double' or v == 'float') then
-                f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");
+
                 f_c:write("        if (!lua_isnumber(L, -1)) {\n");
-                f_c:write("            MM_ERR(\" .. n ..  should be a number\");\n");
+                f_c:write("            MM_ERR(\"" .. n .. " should be a number\");\n");
                 f_c:write("            return 1;\n")
                 f_c:write("        }\n")        
                 f_c:write("        cfg_->" .. n .. " = (" .. v .. ") lua_tonumber(L, -1);\n")
                 f_c:write("        lua_pop(L, 1);\n")
                 f_c:write("        MM_INFO(\"" .. n .. "=%d\", cfg_->".. n .. ");")      
             end
-        f_c:write("\n    }\n")
         end
+        f_c:write("\n    }\n")        
     end
 
   f_c:write([[
