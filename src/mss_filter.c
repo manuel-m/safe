@@ -11,101 +11,20 @@
 #include "bagride.h"
 #include "mmtrace.h"
 
+#include "mss_filter_config.h"
+
 #define HELP_USAGE "usage: mss_filter cfg_file" 
 
 
 static sad_filter_t filter;
 
-struct mss_config_s {
-    int ais_udp_in_port;
-    int admin_http_port;
-    double x1, y1, x2, y2; /* geo filter */
-};
+static struct mss_filter_config_s config = {0};
 
-
-static struct mss_config_s cfg = {0};
 
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static br_udp_clients_t udp_clients = {0};
-
-static int load_cfg(char *config_file_) {
-    int r = 0;
-    lua_State *L = luaL_newstate();
-    luaopen_base(L);
-    
-#define MM_GERR { r=-1;goto end;}    
-
-    if (luaL_loadfile(L, config_file_) || lua_pcall(L, 0, 0, 0)) {
-        MM_ERR("cannot run configuration file: %s");
-	MM_GERR;
-    }
-
-#define MM_GETINT_FROMG(NAME) \
-    lua_getglobal(L, #NAME);\
-    if (!lua_isnumber(L, -1)) {\
-        MM_ERR(#NAME " should be a number\n");\
-        MM_GERR;\
-    }\
-    cfg.NAME = (int) lua_tonumber(L, -1);\
-    lua_pop(L, 1);\
-    MM_INFO(#NAME "=%d", cfg.NAME);
-
-    MM_GETINT_FROMG(ais_udp_in_port);
-    MM_GETINT_FROMG(admin_http_port);
-
-    /* geofilter */
-    {
-    lua_getglobal(L, "geofilter");
-    if (!lua_istable(L, -1)) MM_GERR;
-
-#define MM_GETDOUBLE_FROMTABLE(NAME) \
-    lua_getfield(L, -1, #NAME);\
-    if (!lua_isnumber(L, -1)) {\
-        MM_ERR(#NAME " should be a number\n");\
-        MM_GERR;\
-    }\
-    cfg.NAME = (double) lua_tonumber(L, -1);\
-    lua_pop(L, 1);    
-
-    MM_GETDOUBLE_FROMTABLE(x1)
-    MM_GETDOUBLE_FROMTABLE(x2)
-    MM_GETDOUBLE_FROMTABLE(y1)
-    MM_GETDOUBLE_FROMTABLE(y2)
-
-#undef MM_GETDOUBLE_FROMTABLE
-    }
-
-    /* out udp */
-    {
-    int out_idx=1;
-    lua_getglobal(L, "ais_out_udp");
-    if (!lua_istable(L, -1)) MM_GERR;
-    int n = luaL_len(L, -1);
-    
-    if (0 > br_udp_clients_init(&udp_clients, n)) MM_GERR;
-    
-    lua_pushnil(L);
-
-    while(lua_next(L, -2)) {  
-      if(lua_isstring(L, -1)) {
-          const char* s = lua_tostring(L, -1);
-          if (0 > br_udp_clients_add(&udp_clients, s)) MM_GERR;
-	  MM_INFO("ais_out_udp[%d]=\"%s\"", out_idx,s);
-      }
-      ++out_idx;
-      lua_pop(L, 1);
-    }
-    lua_pop(L, 1);
-    }
-
-    end :
-            lua_close(L);
-    return r;
-    
-#undef MM_GERR
-}
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
@@ -142,7 +61,8 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
         const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
         const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 
-        if (lon > cfg.x1 && lon < cfg.x2 && lat < cfg.y1 && lat > cfg.y2) {
+        if (lon > config.geofilter.x1 && lon < config.geofilter.x2 
+          && lat < config.geofilter.y1 && lat > config.geofilter.y2) {
 
             strncpy(forward_sentence, sentence->start, sentence->n);
             forward_sentence[sentence->n] = '\n';
@@ -178,16 +98,28 @@ int main(int argc, char **argv) {
 
     MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
-    if (0 > load_cfg(argv[1])) MM_GERR;
+    if (0 > mss_filter_config_load(&config,argv[1])) MM_GERR;
 
-    MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", cfg.x1, cfg.y1, cfg.x2, cfg.y2);
-
+    MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", config.geofilter.x1, 
+            config.geofilter.y1, config.geofilter.x2, config.geofilter.y2);
+    
+    /* udp out init */
+    {
+        if (0 > br_udp_clients_init(&udp_clients, config.ais_out_udp.n)) MM_GERR;
+        int idx;
+        for(idx=0;idx<config.ais_out_udp.n;idx++){
+          const char* s = config.ais_out_udp.items[idx];
+            if (0 > br_udp_clients_add(&udp_clients, s)) MM_GERR;
+            MM_INFO("ais_out_udp[%d]=\"%s\"", (idx+1),s);
+        }
+    }
+        
     if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
 
-    udp_server.m_port = cfg.ais_udp_in_port;
+    udp_server.m_port = config.ais_udp_in_port;
     br_udp_server_register(&udp_server, 1);
 
-    http_server.m_port = cfg.admin_http_port;
+    http_server.m_port = config.admin_http_port;
     br_http_server_register(&http_server, 1);
 
     br_run();
@@ -196,7 +128,7 @@ int main(int argc, char **argv) {
 
 end:
     br_udp_clients_close(&udp_clients);
-
+    mss_filter_config_close(&config);
     return r;
 
 }

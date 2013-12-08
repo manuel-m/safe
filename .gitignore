@@ -18,5 +18,3 @@ lua-5.2.2/
 libuv/.libs
 libuv/autom4te.cache
 libs/libuv/
-src/mss_filter_config.c
-src/mss_filter_config.h

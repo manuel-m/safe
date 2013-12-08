@@ -9,6 +9,7 @@ mmapi_m = {
 }
 
 -- logical definition
+    -- singletons
 mmapi = {
          admin_http_port = "int",
 	 ais_udp_in_port = "int",
@@ -17,8 +18,9 @@ mmapi = {
 	               y1 = "double",
 	               x2 = "double",
 		       y2 = "double"
-	             }
+	 }
 }
+    --  lists 
 mmapi_list = {
-         ais_out_udp =  "const char*"
+         ais_out_udp = "char*",
 }

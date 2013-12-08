@@ -28,6 +28,9 @@ function mmgen_api_c()
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "mmtrace.h"
 
 ]])
@@ -43,7 +46,7 @@ function mmgen_api_c()
         return 1;
     }
 ]])
--- iter on params
+-- iter on singletons params
     for n,v in pairs(mmapi) do
       
         f_c:write("    /* " .. n .. " */\n    {\n")
@@ -53,7 +56,7 @@ function mmgen_api_c()
           
                 f_c:write("        if (!lua_istable(L, -1)) {\n")
                 f_c:write("            MM_ERR(\"" .. n .. " is not a table\");\n");
-                f_c:write("            return 1;\n")
+                f_c:write("            return -1;\n")
                 f_c:write("        }\n")
                 
                 -- iter on all table keys
@@ -64,7 +67,7 @@ function mmgen_api_c()
                     if(v2 == 'int' or v2 == 'double' or v2 == 'float') then
                         f_c:write("        if (!lua_isnumber(L, -1)) {\n")
                         f_c:write("            MM_ERR(\""..n .."." .. n2 .. " should be a number\");\n")
-                        f_c:write("            return 1;\n")
+                        f_c:write("            return -1;\n")
                         f_c:write("        }\n")                   
                         f_c:write("        cfg_->" .. n .. "." .. n2 .." = (".. v2 .. ") lua_tonumber(L, -1);\n")
                         f_c:write("        lua_pop(L, 1);\n")
@@ -79,44 +82,88 @@ function mmgen_api_c()
 
                 f_c:write("        if (!lua_isnumber(L, -1)) {\n");
                 f_c:write("            MM_ERR(\"" .. n .. " should be a number\");\n");
-                f_c:write("            return 1;\n")
+                f_c:write("            return -1;\n")
                 f_c:write("        }\n")        
                 f_c:write("        cfg_->" .. n .. " = (" .. v .. ") lua_tonumber(L, -1);\n")
                 f_c:write("        lua_pop(L, 1);\n")
-                f_c:write("        MM_INFO(\"" .. n .. "=%d\", cfg_->".. n .. ");")      
+                f_c:write("        MM_INFO(\"" .. n .. "=%d\", cfg_->".. n .. ");")    
+                
             end
         end
         f_c:write("\n    }\n")        
     end
-
-  f_c:write([[
-    return 0;
-}
-]])
-  
-  
-  f_c:write("int " .. mmapi_m.basename .. "_default(const char* f_){(void)f_;return 1;}\n")
+    
+     -- iter on list params
+    for n,v in pairs(mmapi_list) do
       
-  f_c:close()
+      -- only char*
+      if(v == 'char*') then
+      
+          f_c:write("    /* " .. n .. " */\n    {\n")
+          f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");   
+          f_c:write("        if (!lua_istable(L, -1)) {\n")
+          f_c:write("            MM_ERR(\"" .. n .. " is not a table\");\n");
+          f_c:write("            return -1;\n")
+          f_c:write("        }\n")
+          f_c:write("        cfg_->" .. n .. ".n = luaL_len(L, -1);\n")
+          f_c:write("        cfg_->" .. n .. ".items = (".. v .. "*)calloc(cfg_->" .. n .. ".n, sizeof(" .. v .. "*)); \n")
+          f_c:write("        lua_pushnil(L);\n")
+          f_c:write("        int idx=0;\n")
+          f_c:write("        while(lua_next(L, -2)) {\n") 
+          f_c:write("            if(lua_isstring(L, -1)) {\n")
+          f_c:write("                const char* s = lua_tostring(L, -1);\n")
+          f_c:write("                cfg_->" .. n .. ".items[idx] = strdup(s);\n")
+          f_c:write("                ++idx;\n")
+          f_c:write("            }\n")
+          f_c:write("            lua_pop(L, 1);\n")
+          f_c:write("        }\n")
+          f_c:write("        lua_pop(L, 1); \n")
+          f_c:write("    }\n") 
+          end
+      
+    end -- iter list params
+
+    f_c:write("    lua_close(L);")
+    f_c:write("\n    return 0;\n}\n")
   
-  print("[INFO] " .. filename_c .. " generated")
+    f_c:write("int " .. mmapi_m.basename .. "_default(const char* f_){(void)f_;return 1;/*TODO*/}\n")
+    
+    -- config close
+    f_c:write("void " .. mmapi_m.basename .. "_close(" .. api_t .. "* cfg_)\n{\n")
+     
+    for n,v in pairs(mmapi_list) do -- iter on list params
+      
+        -- only char*
+        if(v == 'char*') then      
+            f_c:write("    /* ".. n .. " */\n")
+            f_c:write("    {\n")
+            f_c:write("        int idx;for(idx=0;idx<cfg_->"..n..".n;idx++)free(cfg_->".. n ..".items[idx]);\n")
+            f_c:write("        free(cfg_->".. n ..".items);\n")
+            f_c:write("    }\n")
+        end
+    end -- iter on list params
+    f_c:write("}\n")
+    
+    
+    f_c:close()
+    print("[INFO] " .. filename_c .. " generated")
    
 end
 
 -- [mmgen_api_h] -------------------------------------------------------------------
 function mmgen_api_h()
   
--- struct
-  local api_t = "struct " .. mmapi_m.basename .. "_s";
+    -- struct
+    local api_t = "struct " .. mmapi_m.basename .. "_s";
   
--- open files
-  local filename_h = mmapi_m.dirname .. "/" .. mmapi_m.basename ..".h";
-  local f_h = io.open (filename_h,"w")
+    -- open files
+    local filename_h = mmapi_m.dirname .. "/" .. mmapi_m.basename ..".h";
+    local f_h = io.open (filename_h,"w")
 
--- h header  
-  f_h:write("#ifndef " .. mmapi_m.define .. "\n")
-  f_h:write("#define " .. mmapi_m.define .. "\n")
-  f_h:write([[
+    -- h header  
+    f_h:write("#ifndef " .. mmapi_m.define .. "\n")
+    f_h:write("#define " .. mmapi_m.define .. "\n")
+    f_h:write([[
     
 #ifdef  __cplusplus
 extern "C" {
@@ -124,24 +171,36 @@ extern "C" {
 
 ]])
 
--- h config struct definition
-  f_h:write(api_t .. "{\n" );
+    -- h config struct definition
+    f_h:write(api_t .. "{\n" );
 
-  for n,v in pairs(mmapi) do
-    if (type(v) == 'table') then
-      f_h:write(" struct {\n");
-      for n2,v2 in pairs(v) do
-        f_h:write("     " .. v2 .. " " .. n2 ..";\n")
-      end
-      f_h:write(" } " .. n .. ";\n");
-    else  
-      f_h:write(" " .. v .. " " .. n ..";\n")
-    end
-  end
-  f_h:write("};\n" );
+    -- iter on api
+    for n,v in pairs(mmapi) do
+        if (type(v) == 'table') then
+            f_h:write("    struct {\n");
+            for n2,v2 in pairs(v) do
+                f_h:write("         " .. v2 .. " " .. n2 ..";\n")
+            end
+        f_h:write("    } " .. n .. ";\n");
+        else  
+        f_h:write("    " .. v .. " " .. n ..";\n")
+        end
+    end  -- iter on api
+    
+    -- iter on api list
+    for n,v in pairs(mmapi_list) do
+        f_h:write("    struct {\n");
+        f_h:write("     int n;\n")
+        f_h:write("     " .. v .. "* items ;\n")
+        f_h:write("    } "  .. n ..";\n")
+    end  -- iter on api    
+    
+    f_h:write("};\n" ); -- end struct config
 
-  f_h:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "*,const char*);\n")
-  f_h:write("int " .. mmapi_m.basename .. "_default(const char* f_);\n")
+    -- functions definitions
+    f_h:write("int " .. mmapi_m.basename .. "_load(" .. api_t .. "*,const char*);\n")
+    f_h:write("void " .. mmapi_m.basename .. "_close(" .. api_t .. "*);\n")
+    f_h:write("int " .. mmapi_m.basename .. "_default(const char* f_);\n")
   
 -- h footer      
   f_h:write([[      
