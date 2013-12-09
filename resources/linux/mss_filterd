@@ -10,7 +10,7 @@ then
 fi
 
 MEXE=/usr/local/bin/mss_filter
-MCONF=/etc/mss_filter/mss_config.lua
+MCONF=/etc/mss_filter/mss_filter.conf
 MTGT="l8:9990"
 MLOG=/var/log/mss_filter.log
 
