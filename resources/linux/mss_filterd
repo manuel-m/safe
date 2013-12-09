@@ -10,7 +10,7 @@ then
 fi
 
 MEXE=/usr/local/bin/mss_filter
-MCONF=/etc/mss_filter/mss_filter.conf
+MCONF_DIR=/etc/mss_filter
 MLOG=/var/log/mss_filter.log
 
 status()
@@ -21,7 +21,10 @@ status()
 
 start()
 {
-        nohup ${MEXE} ${MCONF} > ${MLOG} &
+    for f in $(ls -1 ${MCONF_DIR}/*.conf); do
+        echo "[INFO] starting ${MEXEC} $f"
+        ${MEXE} ${f} &> /dev/null &
+    done
 }
 
 stop()
