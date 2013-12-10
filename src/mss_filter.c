@@ -25,6 +25,8 @@ static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static br_udp_clients_t udp_clients = {0};
+static br_udp_servers_t udp_servers = {0};
+static br_http_servers_t http_servers = {0};
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
@@ -86,15 +88,15 @@ static void mss_info_error(void) {
     printf(HELP_USAGE "\n");
 }
 
-static br_http_server_t http_server = {.m_gen_response_cb = on_stats_response};
-static br_udp_server_t udp_server = {.m_user_parse_cb = on_udp_parse};
+
+
 
 int main(int argc, char **argv) {
     int r = 0;
 
 #define MM_GERR { r=-1;mss_info_error();goto end;}
 
-    if (1 > argc) MM_GERR;
+    if (2 > argc) MM_GERR;
 
     MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
@@ -103,32 +105,47 @@ int main(int argc, char **argv) {
     MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", config.geofilter.x1, 
             config.geofilter.y1, config.geofilter.x2, config.geofilter.y2);
     
-    /* udp out init */
+    /* udp client init */
     {
         if (0 > br_udp_clients_init(&udp_clients, config.ais_out_udp.n)) MM_GERR;
         int idx;
         for(idx=0;idx<config.ais_out_udp.n;idx++){
           const char* s = config.ais_out_udp.items[idx];
-            if (0 > br_udp_clients_add(&udp_clients, s)) MM_GERR;
+            if (0 > br_udp_client_add(&udp_clients, s)) MM_GERR;
             MM_INFO("ais_out_udp[%d]=\"%s\"", (idx+1),s);
         }
     }
         
     if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
 
-    udp_server.m_port = config.ais_udp_in_port;
-    br_udp_server_register(&udp_server, 1);
+    /* udp servers  */
+    {
+        if (0 > br_udp_servers_init(&udp_servers, 1)) return -1;
+        br_udp_server_add(&udp_servers, config.ais_udp_in_port, on_udp_parse);
+    }       
+    
+    /* http servers  */
+    {
+        if (0 > br_http_servers_init(&http_servers, 1)) return -1;
+        br_http_server_add(&http_servers, config.admin_http_port, on_stats_response);
+    }     
 
-    http_server.m_port = config.admin_http_port;
-    br_http_server_register(&http_server, 1);
 
     br_run();
 
 #undef MM_GERR
 
 end:
-    br_udp_clients_close(&udp_clients);
-    mss_filter_config_close(&config);
+
+    /* cleaning */
+    {
+        br_udp_clients_close(&udp_clients);
+        br_udp_servers_close(&udp_servers);
+        br_http_servers_close(&http_servers);
+        mss_filter_config_close(&config);
+    }    
+
+
     return r;
 
 }

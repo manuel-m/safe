@@ -4,6 +4,21 @@
 #include "sub0.h"
 #include "mmtrace.h"
 
+#define BR_VECTOR_IMPL(TYPE_ELEM) \
+int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_){ \
+    uc_->n = n_; \
+    uc_->items = (TYPE_ELEM##_t*) calloc(uc_->n, sizeof (TYPE_ELEM##_t)); \
+    if (NULL == uc_->items) return -1; \
+    return 0; \
+} \
+void TYPE_ELEM##s_close(TYPE_ELEM##s_t* uc_) \
+{ \
+    if (0 == uc_->n) return; \
+    free(uc_->items); \
+    uc_->n = 0; \
+    uc_->items = NULL; \
+} 
+
 static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
         uv_buf_t* buf_) {
     (void) handle_;
@@ -74,30 +89,33 @@ static void on_connect(uv_stream_t* pserver_, int status_) {
     }
 }
 
-void br_tcp_server_register(br_tcp_server_t* tcp_servers_, int size_) {
-    int i = 0;
-    for (i = 0; i < size_; i++) {
-        br_tcp_server_t* server = &tcp_servers_[i];
-        MM_INFO("(%d) tcp in %d", i, server->m_port);
-        uv_tcp_init(uv_default_loop(), &server->m_handler);
-        server->m_handler.data = server;
-        MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
-        MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr));
-        MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_connect));
-    }
+int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_) {
+
+    br_udp_server_t* server = &uc_->items[uc_->i];
+    server->m_port = port_;
+    server->m_user_parse_cb = user_parse_cb_;
+    MM_INFO("(%d) udp in %d", uc_->i, server->m_port);
+    uv_udp_init(uv_default_loop(), &server->m_handler);
+    server->m_handler.data = server;
+    MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
+    MM_ASSERT(0 == uv_udp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr, 0));
+    MM_ASSERT(0 == uv_udp_recv_start(&server->m_handler, on_alloc_buffer, on_udp_recv));
+    ++(uc_->i);
+    return 0;
 }
 
-void br_udp_server_register(br_udp_server_t* udp_servers_, int size_) {
-    int i = 0;
-    for (i = 0; i < size_; i++) {
-        br_udp_server_t* server = &udp_servers_[i];
-        MM_INFO("(%d) udp in %d", i, server->m_port);
-        uv_udp_init(uv_default_loop(), &server->m_handler);
-        server->m_handler.data = server;
-        MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
-        MM_ASSERT(0 == uv_udp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr, 0));
-        MM_ASSERT(0 == uv_udp_recv_start(&server->m_handler, on_alloc_buffer, on_udp_recv));
-    }
+int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_) {
+    br_tcp_server_t* server = &uc_->items[uc_->i];
+    server->m_port = port_;
+    server->m_user_parse_cb = user_parse_cb_;
+    MM_INFO("(%d) tcp in %d", uc_->i, server->m_port);
+    uv_tcp_init(uv_default_loop(), &server->m_handler);
+    server->m_handler.data = server;
+    MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
+    MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_connect));
+    ++(uc_->i);
+    return 0;
 }
 
 int br_udp_client_register(br_udp_client_t* cli_) {
@@ -110,9 +128,14 @@ int br_udp_client_register(br_udp_client_t* cli_) {
     return 0;
 }
 
-int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_) {
+BR_VECTOR_IMPL(br_tcp_server)
+BR_VECTOR_IMPL(br_http_server)
+BR_VECTOR_IMPL(br_udp_client)
+BR_VECTOR_IMPL(br_udp_server)
 
-    br_udp_client_t* cli = &uc_->clients[uc_->i];
+int br_udp_client_add(br_udp_clients_t* uc_, const char* target_) {
+
+    br_udp_client_t* cli = &uc_->items[uc_->i];
     sub0_line_t line;
     sub0_substring_t* sub = NULL;
     sub0_line_prepare(target_, strlen(target_), ':', &line);
@@ -146,27 +169,12 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
 }
 
 void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_) {
-    br_udp_client_t* cli = uc_->clients;
+    br_udp_client_t* cli = uc_->items;
     size_t cli_i;
     for (cli_i = 0; cli_i < uc_->n; cli_i++) {
         br_udp_client_send(cli, str_);
         ++cli;
     }
-}
-
-int br_udp_clients_init(br_udp_clients_t* uc_, size_t n_) {
-    uc_->n = n_;
-    uc_->clients = (br_udp_client_t*) calloc(uc_->n, sizeof (br_udp_client_t));
-    if (NULL == uc_->clients) return -1;
-    return 0;
-
-}
-
-void br_udp_clients_close(br_udp_clients_t* uc_) {
-    if (0 == uc_->n) return;
-    free(uc_->clients);
-    uc_->n = 0;
-    uc_->clients = NULL;
 }
 
 /**
@@ -245,19 +253,23 @@ static void on_http_connect(uv_stream_t* handle_, int status_) {
     }
 }
 
-void br_http_server_register(br_http_server_t* servers_, int size_) {
-    int i = 0;
-    for (i = 0; i < size_; i++) {
-        br_http_server_t* server = &servers_[i];
-        server->m_parser_settings.on_headers_complete = on_headers_complete;
-        MM_INFO("(%d) http in %d", i, server->m_port);
-        uv_tcp_init(uv_default_loop(), &server->m_handler);
-        server->m_handler.data = server;
-        MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_addr));
-        MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_addr));
-        MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
-    }
+int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_) {
+
+    br_http_server_t* server = &uc_->items[uc_->i];
+    server->m_parser_settings.on_headers_complete = on_headers_complete;
+    server->m_port = port_;
+    server->m_gen_response_cb = gen_response_cb_;
+    MM_INFO("(%d) http in %d", uc_->i, server->m_port);
+    uv_tcp_init(uv_default_loop(), &server->m_handler);
+    server->m_handler.data = server;
+    MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_addr));
+    MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_addr));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
+    ++(uc_->i);
+    return 0;
+
 }
+
 
 /**
  * common

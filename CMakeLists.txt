@@ -53,4 +53,16 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
    install(TARGETS ${MSS_FILTER_EXE} DESTINATION bin)
 endif (CMAKE_BUILD_TYPE MATCHES Release)
 
+if (CMAKE_BUILD_TYPE MATCHES Debug)
 
+    add_executable (bagride_server_sample_d 
+    src/http_parser.c 
+    src/mmtrace.c 
+    src/sub0.c 
+    src/bagride.c 
+    src/samples/bagride_server_sample.c )
+    target_link_libraries (bagride_server_sample_d ${UV_A}  -lpthread -lrt)
+
+
+
+endif (CMAKE_BUILD_TYPE MATCHES Debug)

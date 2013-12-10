@@ -15,6 +15,15 @@ extern "C" {
     
 #define BR_MAX_CONNECTIONS 64
 #define BR_MAX_ADDR_SIZE 2048
+
+#define BR_VECTOR_DECL(TYPE_ELEM) \
+typedef struct TYPE_ELEM##s_s { \
+    size_t n; /* total len */ \
+    size_t i; /* current index */ \
+    TYPE_ELEM##_t* items;\
+} TYPE_ELEM##s_t; \
+int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_);\
+void TYPE_ELEM##s_close(TYPE_ELEM##s_t* uc_);
     
    
 /**
@@ -29,6 +38,7 @@ typedef struct br_tcp_server_s {
     void* m_data;
 } br_tcp_server_t;
 
+
 /**
  * parse incomming stream fragment
  * -> set write buffer if write required
@@ -37,7 +47,6 @@ typedef struct br_tcp_server_s {
 typedef int (*br_tcp_server_parser_cb)(ssize_t nread_, const br_buf_t* pbuf_, 
         br_tcp_server_t* pserver_);
 
-void br_tcp_server_register(br_tcp_server_t* tcp_servers_, int size_);
 
 /**
  * udp
@@ -59,21 +68,9 @@ typedef struct br_udp_client_s {
     
 } br_udp_client_t;
 
-typedef struct br_udp_clients_s {
-    size_t n; /* total len */
-    size_t i; /* current index */
-    br_udp_client_t* clients;
-} br_udp_clients_t;
-
-int br_udp_clients_init(br_udp_clients_t*, size_t);
-int br_udp_clients_add(br_udp_clients_t* uc_, const char* target_);
-void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
-void br_udp_clients_close(br_udp_clients_t*);
-
 typedef int (*br_udp_server_parser_cb)(ssize_t nread_, const br_buf_t* pbuf_, 
         br_udp_server_t* pserver_);
 
-void br_udp_server_register(br_udp_server_t* udp_servers_, int size_);
 int br_udp_client_register(br_udp_client_t* cli_);
 
 /**
@@ -99,7 +96,19 @@ typedef struct br_http_client_s {
 
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
-void br_http_server_register(br_http_server_t* servers_, int size_);
+BR_VECTOR_DECL(br_tcp_server)
+BR_VECTOR_DECL(br_http_server)
+BR_VECTOR_DECL(br_udp_client)
+BR_VECTOR_DECL(br_udp_server)
+        
+int br_udp_client_add(br_udp_clients_t* uc_, const char* target_);
+void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
+
+int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
+int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
+
+int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_);
+int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_);
 
 /**
  * common
