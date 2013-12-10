@@ -76,7 +76,7 @@ static void on_udp_send(uv_udp_send_t* req_, int status) {
     free(req_);
 }
 
-static void on_connect(uv_stream_t* pserver_, int status_) {
+static void server_on_connect(uv_stream_t* pserver_, int status_) {
     MM_ASSERT(status_ >= 0);
     uv_tcp_t *pclient = (uv_tcp_t*) calloc(1, sizeof (uv_tcp_t));
     uv_tcp_init(uv_default_loop(), pclient);
@@ -113,7 +113,7 @@ int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_) {
     server->m_handler.data = server;
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_connect));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, server_on_connect));
     ++(uc_->i);
     return 0;
 }

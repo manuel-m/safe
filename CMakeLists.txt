@@ -64,5 +64,8 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     target_link_libraries (bagride_server_sample_d ${UV_A}  -lpthread -lrt)
 
 
+    add_executable (bagride_client_sample_d src/samples/bagride_client_sample.c )
+    target_link_libraries (bagride_client_sample_d ${UV_A}  -lpthread -lrt)
+
 
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
