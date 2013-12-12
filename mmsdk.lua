@@ -71,8 +71,19 @@ function mmgen_api_c()
                         f_c:write("        }\n")                   
                         f_c:write("        cfg_->" .. n .. "." .. n2 .." = (".. v2 .. ") lua_tonumber(L, -1);\n")
                         f_c:write("        lua_pop(L, 1);\n")
-                    end
-              end        
+                     end
+
+                     -- strings                        
+                     if(v2 == 'char*') then
+                          f_c:write("        if (!lua_isstring(L, -1)) {\n")
+                          f_c:write("            MM_ERR(\""..n .."." .. n2 .. " should be a string\");\n")
+                          f_c:write("            return -1;\n")
+                          f_c:write("        }\n")     
+                          f_c:write("        const char* s = lua_tostring(L, -1);\n")
+                          f_c:write("        cfg_->" .. n .. "." .. n2 .." = strdup(s);\n")                          
+                          f_c:write("        lua_pop(L, 1);\n")
+                     end
+              end  -- pairs      
                 
         -- not table  
         else  

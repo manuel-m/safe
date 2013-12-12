@@ -12,8 +12,12 @@ mmapi_m = {
     -- singletons
 mmapi = {
          admin_http_port = "int",
-	 ais_udp_in_port = "int",
-	 ais_tcp_in_port = "int",
+         ais_udp_in_port = "int",
+         ais_tcp_server = {
+                             name             = "char*",
+                             port             = "int",
+                             max_connections  = "int"
+         },
 	 geofilter = { 
 	               x1 = "double",
 	               y1 = "double",

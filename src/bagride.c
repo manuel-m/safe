@@ -61,9 +61,10 @@ static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
     buf_->len = suggested_size_;
 }
 
-static void on_close(uv_handle_t* handle_) {
-    MM_INFO("connection close");
-    free(handle_);
+static void on_close(uv_handle_t* server_handle_) {
+    br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
+    MM_INFO("%s:%d connection close", server->m_name, server->m_port);
+    free(server_handle_);
 }
 
 static void on_after_write(uv_write_t* req_, int status_) {
@@ -85,7 +86,6 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
             uv_write(req, stream_, (uv_buf_t*) write_buffer, 1, on_after_write);
         }
     } else {
-        MM_INFO("close handle");
         uv_close((uv_handle_t*) stream_, on_close);
     }
     free(read_buf_->base);
@@ -139,13 +139,23 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
 
     br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
     if (server->m_clients.i + 1 == server->m_clients.max_connections) {
-        MM_INFO(":%d connection refused, max reached", server->m_port);
+        MM_INFO("%s:%d connection refused, max reached (%d)", 
+                server->m_name,
+                server->m_port,
+                server->m_clients.max_connections);
         return;
     }
     server->m_clients.i++; 
     server->m_clients.items[server->m_clients.i] = pclient;
 
     if (0 == uv_accept(server_handle_, (uv_stream_t*) pclient) ) {
+      
+        MM_INFO("%s:%d connected (%d/%d)", 
+                server->m_name,
+                server->m_port,
+                server->m_clients.i + 1,
+                server->m_clients.max_connections);      
+      
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
         uv_close((uv_handle_t*) pclient, on_close);
@@ -167,11 +177,16 @@ int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_) {
     return 0;
 }
 
-int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_, int max_connections_) {
+int br_tcp_server_add(br_tcp_servers_t* uc_, 
+                      const char* name_,
+                      int port_, 
+                      void* user_parse_cb_, 
+                      int max_connections_) {
     br_tcp_server_t* server = &uc_->items[uc_->i];
+    server->m_name = name_;
     server->m_port = port_;
     server->m_user_parse_cb = user_parse_cb_;
-    MM_INFO("(%d) tcp in %d", uc_->i, server->m_port);
+    MM_INFO("%s:%d server listening", server->m_name, server->m_port);
     uv_tcp_init(uv_default_loop(), &server->m_server_handler);
     server->m_server_handler.data = server;
 

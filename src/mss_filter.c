@@ -17,8 +17,7 @@
 
 static sad_filter_t filter;
 
-static struct mss_filter_config_s config = {0};
-
+static struct mss_filter_config_s config;
 
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
@@ -141,7 +140,11 @@ int main(int argc, char **argv) {
     /* tcp servers  */
     {
         if (0 > br_tcp_servers_init(&tcp_servers, 1)) return -1;
-        br_tcp_server_add(&tcp_servers, config.ais_tcp_in_port, on_tcp_parse,2);
+        br_tcp_server_add(&tcp_servers,
+                          config.ais_tcp_server.name, 
+                          config.ais_tcp_server.port, 
+                          on_tcp_parse,
+                          config.ais_tcp_server.max_connections);
     }    
 
 

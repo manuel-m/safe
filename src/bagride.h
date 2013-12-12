@@ -36,6 +36,7 @@ typedef struct br_tcp_server_s {
     br_buf_t m_write_buffer;    
     void* m_user_parse_cb;
     void* m_data;
+    const char* m_name;
     struct {
         int max_connections;
         int i; /* current index, init with -1 => no connection */
@@ -117,7 +118,12 @@ void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 
-int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_, int max_connections_);
+int br_tcp_server_add(br_tcp_servers_t* uc_,
+                      const char* name_, 
+                      int port_, 
+                      void* user_parse_cb_, 
+                      int max_connections_);
+
 int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_);
 
 /**
