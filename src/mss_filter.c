@@ -3,7 +3,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-
+//#include <signal.h>
 
 #include "uv.h"
 
@@ -27,6 +27,9 @@ static char forward_sentence[1024] = {0};
 static br_udp_clients_t udp_clients = {0};
 static br_udp_servers_t udp_servers = {0};
 static br_http_servers_t http_servers = {0};
+static br_tcp_servers_t tcp_servers = {0};
+
+
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
@@ -79,8 +82,17 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
                     forward_sentence);
 
             br_udp_clients_send(&udp_clients, forward_sentence);
+            br_tcp_write_string(&(tcp_servers.items[0]), forward_sentence, sentence->n + 1);
         }
     }
+    return 0;
+}
+
+static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t* pserver_) {
+    MM_INFO("tcp (%d)[%d] %s data (%p)", pserver_->m_port, (int) nread_, inbuf_->base,
+            pserver_->m_data);
+    if (0 > asprintf(&pserver_->m_write_buffer.base, "<<%s>>", inbuf_->base)) return -1;
+    pserver_->m_write_buffer.len = strlen(pserver_->m_write_buffer.base);
     return 0;
 }
 
@@ -88,11 +100,10 @@ static void mss_info_error(void) {
     printf(HELP_USAGE "\n");
 }
 
-
-
-
 int main(int argc, char **argv) {
     int r = 0;
+    
+//    signal(SIGPIPE, SIG_IGN);
 
 #define MM_GERR { r=-1;mss_info_error();goto end;}
 
@@ -128,7 +139,13 @@ int main(int argc, char **argv) {
     {
         if (0 > br_http_servers_init(&http_servers, 1)) return -1;
         br_http_server_add(&http_servers, config.admin_http_port, on_stats_response);
-    }     
+    }
+    
+    /* tcp servers  */
+    {
+        if (0 > br_tcp_servers_init(&tcp_servers, 1)) return -1;
+        br_tcp_server_add(&tcp_servers, 6969, on_tcp_parse,2);
+    }    
 
 
     br_run();
@@ -142,6 +159,7 @@ end:
         br_udp_clients_close(&udp_clients);
         br_udp_servers_close(&udp_servers);
         br_http_servers_close(&http_servers);
+        br_tcp_servers_close(&tcp_servers);
         mss_filter_config_close(&config);
     }    
 

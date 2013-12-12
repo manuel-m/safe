@@ -10,14 +10,49 @@ int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_){ \
     uc_->items = (TYPE_ELEM##_t*) calloc(uc_->n, sizeof (TYPE_ELEM##_t)); \
     if (NULL == uc_->items) return -1; \
     return 0; \
-} \
-void TYPE_ELEM##s_close(TYPE_ELEM##s_t* uc_) \
-{ \
-    if (0 == uc_->n) return; \
-    free(uc_->items); \
-    uc_->n = 0; \
-    uc_->items = NULL; \
 } 
+
+void br_udp_clients_close(br_udp_clients_t* uc_) {
+    if (0 == uc_->n) return;
+    free(uc_->items);
+    uc_->n = 0;
+    uc_->items = NULL;
+}
+
+void br_udp_servers_close(br_udp_servers_t* uc_) {
+    if (0 == uc_->n) return;
+    free(uc_->items);
+    uc_->n = 0;
+    uc_->items = NULL;
+}
+
+void br_http_servers_close(br_http_servers_t* uc_) {
+    /* to check */
+    if (0 == uc_->n) return;
+    free(uc_->items);
+    uc_->n = 0;
+    uc_->items = NULL;
+}
+
+void br_tcp_servers_close(br_tcp_servers_t* uc_) {
+    if (0 == uc_->n) return;
+
+    int i;
+    for (i = 0; i < uc_->n; i++) {
+        br_tcp_server_t* server = &uc_->items[i];
+        int j;
+        for (j = 0; j < server->m_clients.max_connections; j++) {
+            if ( server->m_clients.items[j]) {
+                free(server->m_clients.items[j]);
+            }
+        }
+        free(server->m_clients.items);
+    }
+   
+    free(uc_->items);
+    uc_->n = 0;
+    uc_->items = NULL;
+}
 
 static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
         uv_buf_t* buf_) {
@@ -50,9 +85,29 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
             uv_write(req, stream_, (uv_buf_t*) write_buffer, 1, on_after_write);
         }
     } else {
+        MM_INFO("close handle");
         uv_close((uv_handle_t*) stream_, on_close);
     }
     free(read_buf_->base);
+}
+
+int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_) {
+
+
+    if (0 == len_ || 0 > server_->m_clients.i) return 0;
+    int i;
+    /* will write on all connected clients */
+    for (i = 0; i <= server_->m_clients.i; i++) {
+        br_buf_t* write_buffer = &server_->m_write_buffer;
+        uv_stream_t* pclient = (uv_stream_t*) server_->m_clients.items[i];
+        write_buffer->len = len_;
+        write_buffer->base = strdup(str_);
+        uv_write_t *req = (uv_write_t *) calloc(1, sizeof (uv_write_t));
+        req->data = (void*) write_buffer->base;
+        uv_write(req, pclient, (uv_buf_t*) write_buffer, 1, on_after_write);
+    }
+
+    return 0;
 }
 
 static void on_udp_recv(uv_udp_t* stream_, ssize_t nread_, const uv_buf_t* read_buff_,
@@ -76,13 +131,21 @@ static void on_udp_send(uv_udp_send_t* req_, int status) {
     free(req_);
 }
 
-static void server_on_connect(uv_stream_t* pserver_, int status_) {
+static void server_on_connect(uv_stream_t* server_handle_, int status_) {
     MM_ASSERT(status_ >= 0);
     uv_tcp_t *pclient = (uv_tcp_t*) calloc(1, sizeof (uv_tcp_t));
     uv_tcp_init(uv_default_loop(), pclient);
-    pclient->data = pserver_->data;
+    pclient->data = server_handle_->data;
 
-    if (uv_accept(pserver_, (uv_stream_t*) pclient) == 0) {
+    br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
+    if (server->m_clients.i == server->m_clients.max_connections) {
+        MM_INFO("too many clients on server");
+        return;
+    }
+    server->m_clients.i++; 
+    server->m_clients.items[server->m_clients.i] = pclient;
+
+    if (uv_accept(server_handle_, (uv_stream_t*) pclient) == 0) {
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
         uv_close((uv_handle_t*) pclient, on_close);
@@ -104,25 +167,31 @@ int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_) {
     return 0;
 }
 
-int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_) {
+int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_, int max_connections_) {
     br_tcp_server_t* server = &uc_->items[uc_->i];
     server->m_port = port_;
     server->m_user_parse_cb = user_parse_cb_;
     MM_INFO("(%d) tcp in %d", uc_->i, server->m_port);
-    uv_tcp_init(uv_default_loop(), &server->m_handler);
-    server->m_handler.data = server;
+    uv_tcp_init(uv_default_loop(), &server->m_server_handler);
+    server->m_server_handler.data = server;
+
+    /* clients */
+    server->m_clients.i = -1;
+    server->m_clients.max_connections = max_connections_;
+    server->m_clients.items = calloc(max_connections_, sizeof (br_tcp_t*));
+
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
-    MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, server_on_connect));
+    MM_ASSERT(0 == uv_tcp_bind(&server->m_server_handler, (const struct sockaddr*) &server->m_socketaddr));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_server_handler, max_connections_, server_on_connect));
     ++(uc_->i);
     return 0;
 }
 
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
-    if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)){
-      MM_ERR("bind %s:%d",cli_->m_addr, cli_->m_port);
-      return -1;
+    if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) {
+        MM_ERR("bind %s:%d", cli_->m_addr, cli_->m_port);
+        return -1;
     }
     uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
     return 0;
@@ -269,7 +338,6 @@ int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_
     return 0;
 
 }
-
 
 /**
  * common

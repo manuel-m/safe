@@ -32,10 +32,17 @@ void TYPE_ELEM##s_close(TYPE_ELEM##s_t* uc_);
 typedef struct br_tcp_server_s {
     int m_port;
     struct sockaddr_in m_socketaddr;
-    br_tcp_t m_handler;
+    br_tcp_t m_server_handler;
     br_buf_t m_write_buffer;    
     void* m_user_parse_cb;
     void* m_data;
+    struct {
+        int max_connections;
+        int i; /* current index, init with -1 => no connection */
+        br_tcp_t** items;
+    } m_clients;
+    
+    
 } br_tcp_server_t;
 
 
@@ -94,6 +101,9 @@ typedef struct br_http_client_s {
     uv_buf_t m_resbuf;
 } br_http_client_t;
 
+int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
+
+
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
 BR_VECTOR_DECL(br_tcp_server)
@@ -107,7 +117,7 @@ void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 
-int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_);
+int br_tcp_server_add(br_tcp_servers_t* uc_, int port_, void* user_parse_cb_, int max_connections_);
 int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_);
 
 /**

@@ -61,8 +61,8 @@ int main(void) {
     /* tcp servers  */
     {
         if (0 > br_tcp_servers_init(&tcp_servers, 2)) return -1;
-        br_tcp_server_add(&tcp_servers, 6969, on_tcp_parse);
-        br_tcp_server_add(&tcp_servers, 7070, on_tcp_parse);
+        br_tcp_server_add(&tcp_servers, 6969, on_tcp_parse,2);
+        br_tcp_server_add(&tcp_servers, 7070, on_tcp_parse,2);
     }
     
     /* udp servers  */
