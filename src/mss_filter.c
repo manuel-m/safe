@@ -3,7 +3,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-//#include <signal.h>
 
 #include "uv.h"
 
@@ -103,8 +102,6 @@ static void mss_info_error(void) {
 int main(int argc, char **argv) {
     int r = 0;
     
-//    signal(SIGPIPE, SIG_IGN);
-
 #define MM_GERR { r=-1;mss_info_error();goto end;}
 
     if (2 > argc) MM_GERR;
@@ -144,7 +141,7 @@ int main(int argc, char **argv) {
     /* tcp servers  */
     {
         if (0 > br_tcp_servers_init(&tcp_servers, 1)) return -1;
-        br_tcp_server_add(&tcp_servers, 6969, on_tcp_parse,2);
+        br_tcp_server_add(&tcp_servers, config.ais_tcp_in_port, on_tcp_parse,2);
     }    
 
 

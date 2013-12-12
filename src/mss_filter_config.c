@@ -27,17 +27,6 @@ int mss_filter_config_load(struct mss_filter_config_s* cfg_,const char* f_)
         lua_pop(L, 1);
         MM_INFO("admin_http_port=%d", cfg_->admin_http_port);
     }
-    /* ais_udp_in_port */
-    {
-        lua_getglobal(L,"ais_udp_in_port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_udp_in_port should be a number");
-            return -1;
-        }
-        cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        MM_INFO("ais_udp_in_port=%d", cfg_->ais_udp_in_port);
-    }
     /* geofilter */
     {
         lua_getglobal(L,"geofilter");
@@ -51,6 +40,13 @@ int mss_filter_config_load(struct mss_filter_config_s* cfg_,const char* f_)
             return -1;
         }
         cfg_->geofilter.y2 = (double) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, -1, "x2");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("geofilter.x2 should be a number");
+            return -1;
+        }
+        cfg_->geofilter.x2 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
         lua_getfield(L, -1, "y1");
         if (!lua_isnumber(L, -1)) {
@@ -66,14 +62,29 @@ int mss_filter_config_load(struct mss_filter_config_s* cfg_,const char* f_)
         }
         cfg_->geofilter.x1 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
-        lua_getfield(L, -1, "x2");
+
+    }
+    /* ais_tcp_in_port */
+    {
+        lua_getglobal(L,"ais_tcp_in_port");
         if (!lua_isnumber(L, -1)) {
-            MM_ERR("geofilter.x2 should be a number");
+            MM_ERR("ais_tcp_in_port should be a number");
             return -1;
         }
-        cfg_->geofilter.x2 = (double) lua_tonumber(L, -1);
+        cfg_->ais_tcp_in_port = (int) lua_tonumber(L, -1);
         lua_pop(L, 1);
-
+        MM_INFO("ais_tcp_in_port=%d", cfg_->ais_tcp_in_port);
+    }
+    /* ais_udp_in_port */
+    {
+        lua_getglobal(L,"ais_udp_in_port");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("ais_udp_in_port should be a number");
+            return -1;
+        }
+        cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        MM_INFO("ais_udp_in_port=%d", cfg_->ais_udp_in_port);
     }
     /* ais_out_udp */
     {

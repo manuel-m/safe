@@ -138,14 +138,14 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
     pclient->data = server_handle_->data;
 
     br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
-    if (server->m_clients.i == server->m_clients.max_connections) {
-        MM_INFO("too many clients on server");
+    if (server->m_clients.i + 1 == server->m_clients.max_connections) {
+        MM_INFO(":%d connection refused, max reached", server->m_port);
         return;
     }
     server->m_clients.i++; 
     server->m_clients.items[server->m_clients.i] = pclient;
 
-    if (uv_accept(server_handle_, (uv_stream_t*) pclient) == 0) {
+    if (0 == uv_accept(server_handle_, (uv_stream_t*) pclient) ) {
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
         uv_close((uv_handle_t*) pclient, on_close);

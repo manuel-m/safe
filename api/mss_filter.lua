@@ -13,6 +13,7 @@ mmapi_m = {
 mmapi = {
          admin_http_port = "int",
 	 ais_udp_in_port = "int",
+	 ais_tcp_in_port = "int",
 	 geofilter = { 
 	               x1 = "double",
 	               y1 = "double",
