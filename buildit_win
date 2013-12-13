@@ -1,0 +1,18 @@
+MYEXE=./win32/mss_filter32.exe
+
+LIBUV_A=$(find ./libs -name libuv.a)
+LIBLUA_A=$(find ./libs -name liblua.a)
+
+MINGW_DIR=/c/MinGW/lib
+
+LIBGDI32_A=${MINGW_DIR}/libgdi32.a
+LIBNTDLL_A=${MINGW_DIR}/libntdll.a  
+LIBIPHLPAPI_A=${MINGW_DIR}/libiphlpapi.a  
+LIBWS2_32_A=${MINGW_DIR}/libws2_32.a  
+LIBPSAPI_A=${MINGW_DIR}/libpsapi.a  
+
+if [ ! -d ./bin ]; then mkdir ./bin; fi 
+gcc -v -m32 -O3 -DNDEBUG -o ${MYEXE} -Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include $(ls src/*.c) ${LIBUV_A} ${LIBLUA_A} \
+${LIBGDI32_A} ${LIBNTDLL_A} ${LIBIPHLPAPI_A} ${LIBWS2_32_A} ${LIBPSAPI_A} \
+ -lm
+strip -s ${MYEXE}

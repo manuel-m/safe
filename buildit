@@ -1,7 +1,9 @@
-MYEXE=./bin/mss_filter_nocmake 
+MYEXE=./bin/mss_filter 
+
+
+LIBUV_A=$(find ./libs -name libuv.a)
+LIBLUA_A=$(find ./libs -name liblua.a)
+
 if [ ! -d ./bin ]; then mkdir ./bin; fi 
-gcc -O3 -DNDEBUG -o ${MYEXE} \
--Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include $(ls src/*.c) \
-./libs/libuv/.libs/libuv.a  ./libs/lua-5.2.2/src/liblua.a \
--lpthread -lrt -lm
+gcc -O3 -DNDEBUG -o ${MYEXE} -Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include $(ls src/*.c) ${LIBUV_A} ${LIBLUA_A} -lpthread -lrt -lm
 strip -s ${MYEXE}
