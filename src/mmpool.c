@@ -11,6 +11,7 @@ mmpool_t* mmpool_new(int max_, size_t item_size_, void* userdata_) {
     pool->m_max = max_;
     pool->m_item_size = item_size_;
     pool->items = (mmpool_item_t**) calloc(max_, sizeof (mmpool_item_t*));
+    pool->m_taken_total = 0;
     if (NULL == pool->items) {
         free(pool);
         return NULL;
@@ -31,8 +32,8 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
         ++(pool_->m_alloc_len);
         ++(pool_->m_taken_len);
         item->m_parent = pool_;
-//        item->m_parent_index = pool_->m_alloc_len;
         item->m_state = 1;
+        ++(pool_->m_taken_total);
         return item;
     }
 
@@ -43,6 +44,7 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
         if(0 == item->m_state){
             item->m_state = 1;
             ++(pool_->m_taken_len);
+            ++(pool_->m_taken_total);
             return item;
         }
     }

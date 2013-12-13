@@ -68,8 +68,12 @@ static void on_close(uv_handle_t* client_handle_) {
             server->m_clients->m_taken_len,
             server->m_clients->m_max,
             client_handle_);
-
 }
+static void on_close_quick(uv_handle_t* client_handle_) {
+    free(client_handle_);
+}
+
+
 
 static void on_after_write(uv_write_t* req_, int status_) {
     MM_ASSERT(status_ >= 0);
@@ -148,27 +152,37 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
     MM_ASSERT(status_ >= 0);
     br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
     mmpool_item_t* client_pool_item = mmpool_take(server->m_clients);
+    
+    uv_tcp_t *pclient;
 
     if (NULL == client_pool_item) {
-        MM_INFO("%s:%d connection refused, max reached (%d)",
+        MM_WARN("%s:%d max connections reached (%d) ... system wont accept new connections",
                 server->m_name,
                 server->m_port,
                 server->m_clients->m_max);
+        /* workaround : connection is accepted and immediatly closed.
+         This allow to re-accept new connections after some disconnections ...*/
+        pclient = malloc(sizeof(uv_tcp_t));
+        uv_tcp_init(uv_default_loop(), pclient);
+        uv_accept(server_handle_, (uv_stream_t*) pclient);
+        uv_close((uv_handle_t*) pclient, on_close_quick);
         return;
+        
     }
 
-    uv_tcp_t *pclient = (uv_tcp_t *) client_pool_item->m_p;
+    pclient = (uv_tcp_t *) client_pool_item->m_p;
+    
     uv_tcp_init(uv_default_loop(), pclient);
     pclient->data = client_pool_item;
 
     if (0 == uv_accept(server_handle_, (uv_stream_t*) pclient)) {
 
-        MM_INFO("%s:%d connect (%d/%d) (%p)",
+        MM_INFO("%s:%d connect (%d/%d) (serv:%p cli:%p)",
                 server->m_name,
                 server->m_port,
                 server->m_clients->m_taken_len,
                 server->m_clients->m_max,
-                pclient);
+                server_handle_, pclient);
 
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
@@ -209,7 +223,9 @@ int br_tcp_server_add(br_tcp_servers_t* uc_,
 
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_tcp_bind(&server->m_server_handler, (const struct sockaddr*) &server->m_socketaddr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_server_handler, max_connections_, server_on_connect));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_server_handler, 
+            max_connections_,  /* extra-overhead */
+            server_on_connect));
     ++(uc_->i);
     return 0;
 }

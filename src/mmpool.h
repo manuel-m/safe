@@ -27,6 +27,7 @@ extern "C" {
         int m_taken_len;
         size_t m_item_size;
         void* m_userdata; 
+        long long m_taken_total;
         mmpool_item_t** items;
     } mmpool_t;
 
