@@ -1,6 +1,7 @@
+MYEXE=./bin/mss_filter_nocmake 
 if [ ! -d ./bin ]; then mkdir ./bin; fi 
-gcc -o ./bin/mss_filter \
--Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include \
-src/http_parser.c src/mmtrace.c src/sub0.c src/bagride.c src/sad.c src/mss_filter.c \
+gcc -O3 -DNDEBUG -o ${MYEXE} \
+-Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include $(ls src/*.c) \
 ./libs/libuv/.libs/libuv.a  ./libs/lua-5.2.2/src/liblua.a \
 -lpthread -lrt -lm
+strip -s ${MYEXE}

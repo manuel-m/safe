@@ -8,6 +8,7 @@ extern "C" {
 #include "uv.h"
 #include "http_parser.h"
     
+#include "mmpool.h"    
     
 #define br_buf_t uv_buf_t
 #define br_tcp_t uv_tcp_t
@@ -37,11 +38,9 @@ typedef struct br_tcp_server_s {
     void* m_user_parse_cb;
     void* m_data;
     const char* m_name;
-    struct {
-        int max_connections;
-        int i; /* current index, init with -1 => no connection */
-        br_tcp_t** items;
-    } m_clients;
+    
+    mmpool_t* m_clients;
+    
     
     
 } br_tcp_server_t;

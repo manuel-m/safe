@@ -34,18 +34,18 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(MSS_FILTER_EXE "${MSS_FILTER_EXE}_d")
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
-
 include_directories (src)
-add_executable (${MSS_FILTER_EXE} 
-src/http_parser.c 
+
+add_library(mm src/http_parser.c 
 src/mmtrace.c 
+src/mmpool.c 
 src/sub0.c 
 src/bagride.c 
-src/sad.c
-src/mss_filter_config.c
-src/mss_filter.c )
+src/sad.c)
 
-target_link_libraries (${MSS_FILTER_EXE} ${UV_A} ${LUA_A} )
+add_executable (${MSS_FILTER_EXE} src/mss_filter_config.c src/mss_filter.c )
+
+target_link_libraries (${MSS_FILTER_EXE} mm ${UV_A} ${LUA_A} )
 target_link_libraries (${MSS_FILTER_EXE} -lpthread -lrt -lm)
 
 
@@ -55,14 +55,8 @@ endif (CMAKE_BUILD_TYPE MATCHES Release)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
 
-    add_executable (bagride_server_sample_d 
-    src/http_parser.c 
-    src/mmtrace.c 
-    src/sub0.c 
-    src/bagride.c 
-    src/samples/bagride_server_sample.c )
-    target_link_libraries (bagride_server_sample_d ${UV_A}  -lpthread -lrt)
-
+    add_executable (bagride_server_sample_d  src/samples/bagride_server_sample.c )
+    target_link_libraries (bagride_server_sample_d mm ${UV_A}  -lpthread -lrt)
 
     add_executable (bagride_client_sample_d src/samples/bagride_client_sample.c )
     target_link_libraries (bagride_client_sample_d ${UV_A}  -lpthread -lrt)
