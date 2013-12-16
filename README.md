@@ -22,3 +22,12 @@ usage
 =====
 
 mss_filter ./mss_config.conf
+
+
+TODO
+======
+
+- JSON vessels server
+- http server using leafjs
+- smarter config code generator (multilevel,less code)
+- disable messages decoding with defines
