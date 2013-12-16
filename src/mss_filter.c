@@ -23,7 +23,7 @@ static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static br_udp_clients_t udp_clients = {0};
-static br_udp_servers_t udp_servers = {0};
+static mmpool_t* udp_servers = NULL;
 static br_http_servers_t http_servers = {0};
 static mmpool_t* tcp_servers = NULL;
 
@@ -123,8 +123,8 @@ int main(int argc, char **argv) {
 
     /* udp servers  */
     {
-        if (0 > br_udp_servers_init(&udp_servers, 1)) return -1;
-        br_udp_server_add(&udp_servers, config.ais_udp_in_port, on_udp_parse);
+        if (NULL == (udp_servers = mmpool_new(1, sizeof(br_udp_server_t), NULL))) return -1;
+        br_udp_server_add(udp_servers, config.ais_udp_in_port, on_udp_parse);
     }       
     
     /* http servers  */
@@ -153,7 +153,7 @@ end:
     /* cleaning */
     {
         br_udp_clients_close(&udp_clients);
-        br_udp_servers_close(&udp_servers);
+        mmpool_free(udp_servers);
         br_http_servers_close(&http_servers);
         br_tcp_servers_close(tcp_servers);
         mss_filter_config_close(&config);
