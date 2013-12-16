@@ -9,7 +9,7 @@
 #include "mmtrace.h"
 
 
-static br_tcp_servers_t tcp_servers = {0};
+static mmpool_t* tcp_servers = NULL;
 static br_udp_servers_t udp_servers = {0};
 static br_http_servers_t http_servers = {0};
 
@@ -60,9 +60,9 @@ int main(void) {
 
     /* tcp servers  */
     {
-        if (0 > br_tcp_servers_init(&tcp_servers, 2)) return -1;
-        br_tcp_server_add(&tcp_servers, "server1", 6969, on_tcp_parse,2);
-        br_tcp_server_add(&tcp_servers, "server1", 7070, on_tcp_parse,2);
+        if (NULL == (tcp_servers = mmpool_new(2, sizeof(br_tcp_server_t), NULL))) return -1;
+        br_tcp_server_add(tcp_servers, "server1", 6969, on_tcp_parse,2);
+        br_tcp_server_add(tcp_servers, "server1", 7070, on_tcp_parse,2);
     }
     
     /* udp servers  */
@@ -84,7 +84,7 @@ int main(void) {
 
     /* cleaning */
     {
-        br_tcp_servers_close(&tcp_servers);
+        br_tcp_servers_close(tcp_servers);
         br_udp_servers_close(&udp_servers);
         br_http_servers_close(&http_servers);
     }

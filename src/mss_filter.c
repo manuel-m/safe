@@ -25,7 +25,7 @@ static char forward_sentence[1024] = {0};
 static br_udp_clients_t udp_clients = {0};
 static br_udp_servers_t udp_servers = {0};
 static br_http_servers_t http_servers = {0};
-static br_tcp_servers_t tcp_servers = {0};
+static mmpool_t* tcp_servers = NULL;
 
 
 
@@ -72,15 +72,11 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
             forward_sentence[sentence->n + 1] = '\0';
 
             printf("[ok] %08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
-                    filter_->sentences,
-                    ais->type,
-                    ais->mmsi,
-                    lat,
-                    lon,
-                    forward_sentence);
+                    filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
 
             br_udp_clients_send(&udp_clients, forward_sentence);
-            br_tcp_write_string(&(tcp_servers.items[0]), forward_sentence, sentence->n + 1);
+            br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
+                    forward_sentence, sentence->n + 1);
         }
     }
     return 0;
@@ -139,8 +135,8 @@ int main(int argc, char **argv) {
     
     /* tcp servers  */
     {
-        if (0 > br_tcp_servers_init(&tcp_servers, 1)) return -1;
-        br_tcp_server_add(&tcp_servers,
+        if (NULL == (tcp_servers = mmpool_new(1, sizeof(br_tcp_server_t), NULL))) return -1;
+        br_tcp_server_add(tcp_servers,
                           config.ais_tcp_server.name, 
                           config.ais_tcp_server.port, 
                           on_tcp_parse,
@@ -159,7 +155,7 @@ end:
         br_udp_clients_close(&udp_clients);
         br_udp_servers_close(&udp_servers);
         br_http_servers_close(&http_servers);
-        br_tcp_servers_close(&tcp_servers);
+        br_tcp_servers_close(tcp_servers);
         mss_filter_config_close(&config);
     }    
 

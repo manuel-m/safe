@@ -6,18 +6,18 @@ extern "C" {
 #endif
 
 struct mss_filter_config_s{
+    struct {
+         int max_connections;
+         char* name;
+         int port;
+    } ais_tcp_server;
     int admin_http_port;
     struct {
+         double y1;
          double y2;
          double x2;
          double x1;
-         double y1;
     } geofilter;
-    struct {
-         int port;
-         char* name;
-         int max_connections;
-    } ais_tcp_server;
     int ais_udp_in_port;
     struct {
      int n;

@@ -34,18 +34,18 @@ void br_http_servers_close(br_http_servers_t* uc_) {
     uc_->items = NULL;
 }
 
-void br_tcp_servers_close(br_tcp_servers_t* uc_) {
-    if (0 == uc_->n) return;
-
-    int i;
-    for (i = 0; i < uc_->n; i++) {
-        br_tcp_server_t* server = &uc_->items[i];
-        mmpool_free(server->m_clients);
+void br_tcp_servers_close(mmpool_t* srv_pool_) {
+    
+    mmpool_iter_t iter;
+    mmpool_iter_init(&iter, srv_pool_);
+    
+    br_tcp_server_t* srv = mmpool_iter_next(&iter);
+    
+    while(srv) {
+        mmpool_free(srv->m_clients);
+        srv = mmpool_iter_next(&iter);
     }
-
-    free(uc_->items);
-    uc_->n = 0;
-    uc_->items = NULL;
+    mmpool_free(srv_pool_);
 }
 
 static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
@@ -205,12 +205,11 @@ int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_) {
     return 0;
 }
 
-int br_tcp_server_add(br_tcp_servers_t* uc_,
-        const char* name_,
-        int port_,
-        void* user_parse_cb_,
-        int max_connections_) {
-    br_tcp_server_t* server = &uc_->items[uc_->i];
+int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
+        void* user_parse_cb_, int max_connections_) {
+    mmpool_item_t* pool_item = mmpool_take(srv_pool_); 
+    if(NULL==pool_item) return -1;
+    br_tcp_server_t* server = (br_tcp_server_t*)pool_item->m_p;
     server->m_name = name_;
     server->m_port = port_;
     server->m_user_parse_cb = user_parse_cb_;
@@ -223,10 +222,8 @@ int br_tcp_server_add(br_tcp_servers_t* uc_,
 
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_tcp_bind(&server->m_server_handler, (const struct sockaddr*) &server->m_socketaddr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_server_handler, 
-            max_connections_,  /* extra-overhead */
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_server_handler, max_connections_,  
             server_on_connect));
-    ++(uc_->i);
     return 0;
 }
 
@@ -240,7 +237,7 @@ int br_udp_client_register(br_udp_client_t* cli_) {
     return 0;
 }
 
-BR_VECTOR_IMPL(br_tcp_server)
+//BR_VECTOR_IMPL(br_tcp_server)
 BR_VECTOR_IMPL(br_http_server)
 BR_VECTOR_IMPL(br_udp_client)
 BR_VECTOR_IMPL(br_udp_server)

@@ -38,13 +38,10 @@ typedef struct br_tcp_server_s {
     void* m_user_parse_cb;
     void* m_data;
     const char* m_name;
-    
     mmpool_t* m_clients;
-    
-    
-    
 } br_tcp_server_t;
 
+void br_tcp_servers_close(mmpool_t* srv_pool_);
 
 /**
  * parse incomming stream fragment
@@ -106,7 +103,6 @@ int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
 
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
-BR_VECTOR_DECL(br_tcp_server)
 BR_VECTOR_DECL(br_http_server)
 BR_VECTOR_DECL(br_udp_client)
 BR_VECTOR_DECL(br_udp_server)
@@ -117,11 +113,8 @@ void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 int br_udp_server_add(br_udp_servers_t* uc_, int port_, void* user_parse_cb_);
 
-int br_tcp_server_add(br_tcp_servers_t* uc_,
-                      const char* name_, 
-                      int port_, 
-                      void* user_parse_cb_, 
-                      int max_connections_);
+int br_tcp_server_add(mmpool_t* serv_pool_, const char* name_, int port_, 
+        void* user_parse_cb_, int max_connections_);
 
 int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_);
 
