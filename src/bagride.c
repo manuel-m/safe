@@ -12,17 +12,6 @@ int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_){ \
     return 0; \
 } 
 
-void br_udp_clients_close(br_udp_clients_t* uc_) {
-    if (0 == uc_->n) return;
-    free(uc_->items);
-    uc_->n = 0;
-    uc_->items = NULL;
-}
-
-
-
-
-
 void br_tcp_servers_close(mmpool_t* srv_pool_) {
 
     mmpool_iter_t iter;
@@ -216,8 +205,6 @@ int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
     return 0;
 }
 
-
-
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
     if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) {
@@ -228,12 +215,12 @@ int br_udp_client_register(br_udp_client_t* cli_) {
     return 0;
 }
 
+int br_udp_client_add(mmpool_t* cli_pool_, const char* target_) {
 
-BR_VECTOR_IMPL(br_udp_client)
+    mmpool_item_t* pool_item = mmpool_take(cli_pool_);
+    if (NULL == pool_item) return -1;
+    br_udp_client_t* cli = (br_udp_client_t*) pool_item->m_p;
 
-int br_udp_client_add(br_udp_clients_t* uc_, const char* target_) {
-
-    br_udp_client_t* cli = &uc_->items[uc_->i];
     sub0_line_t line;
     sub0_substring_t* sub = NULL;
     sub0_line_prepare(target_, strlen(target_), ':', &line);
@@ -250,9 +237,7 @@ int br_udp_client_add(br_udp_clients_t* uc_, const char* target_) {
     sub = sub0_line_next_substring(&line);
     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
     cli->m_port = atoi(sub->start);
-
     if (0 > br_udp_client_register(cli)) return -1;
-    ++(uc_->i);
     return 0;
 }
 
@@ -266,12 +251,18 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
             (const struct sockaddr *) &cli_->m_socketaddr, on_udp_send);
 }
 
-void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_) {
-    br_udp_client_t* cli = uc_->items;
-    size_t cli_i;
-    for (cli_i = 0; cli_i < uc_->n; cli_i++) {
-        br_udp_client_send(cli, str_);
-        ++cli;
+void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
+    
+    mmpool_iter_t iter = {
+        .m_index = 0,
+        .m_pool = cli_pool_
+    };
+
+    br_udp_client_t* pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
+
+    while (pclient) {    
+        br_udp_client_send(pclient, str_);
+        pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
     }
 }
 

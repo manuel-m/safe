@@ -16,16 +16,7 @@ extern "C" {
     
 #define BR_MAX_CONNECTIONS 64
 #define BR_MAX_ADDR_SIZE 2048
-
-#define BR_VECTOR_DECL(TYPE_ELEM) \
-typedef struct TYPE_ELEM##s_s { \
-    size_t n; /* total len */ \
-    size_t i; /* current index */ \
-    TYPE_ELEM##_t* items;\
-} TYPE_ELEM##s_t; \
-int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_);\
-void TYPE_ELEM##s_close(TYPE_ELEM##s_t* uc_);
-    
+   
    
 /**
  * tcp
@@ -104,10 +95,9 @@ int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
 
-BR_VECTOR_DECL(br_udp_client)
         
-int br_udp_client_add(br_udp_clients_t* uc_, const char* target_);
-void br_udp_clients_send(br_udp_clients_t* uc_, const char* str_);
+int br_udp_client_add(mmpool_t* cli_pool_, const char* target_);
+void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_);
 
 int br_udp_server_add(mmpool_t* serv_pool_, int port_, void* user_parse_cb_);
 
