@@ -11,7 +11,7 @@
 
 static mmpool_t* tcp_servers = NULL;
 static mmpool_t* udp_servers = NULL;
-static br_http_servers_t http_servers = {0};
+static mmpool_t* http_servers = NULL;
 
 static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
     MM_INFO("udp (%d)[%d] %s data (%p)", pserver_->m_port, (int) nread_,
@@ -74,9 +74,9 @@ int main(void) {
 
     /* http servers  */
     {
-        if (0 > br_http_servers_init(&http_servers, 2)) return -1;
-        br_http_server_add(&http_servers, 7373, gen_hello_response1_cb);
-        br_http_server_add(&http_servers, 7474, gen_hello_response2_cb);
+        if (NULL == (http_servers = mmpool_new(2, sizeof(br_http_server_t), NULL))) return -1;
+        br_http_server_add(http_servers, 7373, gen_hello_response1_cb);
+        br_http_server_add(http_servers, 7474, gen_hello_response2_cb);
     }    
     
 
@@ -86,7 +86,7 @@ int main(void) {
     {
         br_tcp_servers_close(tcp_servers);
         mmpool_free(udp_servers);
-        br_http_servers_close(&http_servers);
+        mmpool_free(http_servers);
     }
 
     return 0;

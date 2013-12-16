@@ -24,7 +24,7 @@ static char forward_sentence[1024] = {0};
 
 static br_udp_clients_t udp_clients = {0};
 static mmpool_t* udp_servers = NULL;
-static br_http_servers_t http_servers = {0};
+static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
 
 
@@ -129,8 +129,8 @@ int main(int argc, char **argv) {
     
     /* http servers  */
     {
-        if (0 > br_http_servers_init(&http_servers, 1)) return -1;
-        br_http_server_add(&http_servers, config.admin_http_port, on_stats_response);
+        if (NULL == (http_servers = mmpool_new(1, sizeof(br_http_server_t), NULL))) return -1;
+        br_http_server_add(http_servers, config.admin_http_port, on_stats_response);
     }
     
     /* tcp servers  */
@@ -154,7 +154,7 @@ end:
     {
         br_udp_clients_close(&udp_clients);
         mmpool_free(udp_servers);
-        br_http_servers_close(&http_servers);
+        mmpool_free(http_servers);
         br_tcp_servers_close(tcp_servers);
         mss_filter_config_close(&config);
     }    

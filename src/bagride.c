@@ -21,13 +21,7 @@ void br_udp_clients_close(br_udp_clients_t* uc_) {
 
 
 
-void br_http_servers_close(br_http_servers_t* uc_) {
-    /* to check */
-    if (0 == uc_->n) return;
-    free(uc_->items);
-    uc_->n = 0;
-    uc_->items = NULL;
-}
+
 
 void br_tcp_servers_close(mmpool_t* srv_pool_) {
 
@@ -222,6 +216,8 @@ int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
     return 0;
 }
 
+
+
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
     if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) {
@@ -232,7 +228,7 @@ int br_udp_client_register(br_udp_client_t* cli_) {
     return 0;
 }
 
-BR_VECTOR_IMPL(br_http_server)
+
 BR_VECTOR_IMPL(br_udp_client)
 
 int br_udp_client_add(br_udp_clients_t* uc_, const char* target_) {
@@ -355,19 +351,20 @@ static void on_http_connect(uv_stream_t* handle_, int status_) {
     }
 }
 
-int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_) {
+int br_http_server_add(mmpool_t* srv_pool_, int port_, void* gen_response_cb_) {
 
-    br_http_server_t* server = &uc_->items[uc_->i];
+    mmpool_item_t* pool_item = mmpool_take(srv_pool_);
+    if (NULL == pool_item) return -1;
+    br_http_server_t* server = (br_http_server_t*) pool_item->m_p;
     server->m_parser_settings.on_headers_complete = on_headers_complete;
     server->m_port = port_;
     server->m_gen_response_cb = gen_response_cb_;
-    MM_INFO("(%d) http in %d", uc_->i, server->m_port);
+    MM_INFO("(%d) http %d", server->m_port);
     uv_tcp_init(uv_default_loop(), &server->m_handler);
     server->m_handler.data = server;
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_addr));
     MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_addr));
     MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
-    ++(uc_->i);
     return 0;
 
 }

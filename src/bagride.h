@@ -103,7 +103,7 @@ int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
 
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
-BR_VECTOR_DECL(br_http_server)
+
 BR_VECTOR_DECL(br_udp_client)
         
 int br_udp_client_add(br_udp_clients_t* uc_, const char* target_);
@@ -114,7 +114,7 @@ int br_udp_server_add(mmpool_t* serv_pool_, int port_, void* user_parse_cb_);
 int br_tcp_server_add(mmpool_t* serv_pool_, const char* name_, int port_, 
         void* user_parse_cb_, int max_connections_);
 
-int br_http_server_add(br_http_servers_t* uc_, int port_, void* gen_response_cb_);
+int br_http_server_add(mmpool_t*  serv_pool_, int port_, void* gen_response_cb_);
 
 /**
  * common
