@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
             config.geofilter.y1, config.geofilter.x2, config.geofilter.y2);
     
     /* udp client init */
+    if(0 < config.ais_out_udp.n)
     {
         if (NULL == (udp_clients = mmpool_new(config.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
         int idx;

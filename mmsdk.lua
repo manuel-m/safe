@@ -111,24 +111,27 @@ function mmgen_api_c()
       if(v == 'char*') then
       
           f_c:write("    /* " .. n .. " */\n    {\n")
-          f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");   
+          f_c:write("        lua_getglobal(L,\"" .. n .. "\");\n");
+          -- no list defined
           f_c:write("        if (!lua_istable(L, -1)) {\n")
-          f_c:write("            MM_ERR(\"" .. n .. " is not a table\");\n");
-          f_c:write("            return -1;\n")
+          f_c:write("              cfg_->" .. n .. ".n = 0;\n")
+          f_c:write("              cfg_->" .. n .. ".items = NULL; \n")
           f_c:write("        }\n")
-          f_c:write("        cfg_->" .. n .. ".n = luaL_len(L, -1);\n")
-          f_c:write("        cfg_->" .. n .. ".items = (".. v .. "*)calloc(cfg_->" .. n .. ".n, sizeof(" .. v .. "*)); \n")
-          f_c:write("        lua_pushnil(L);\n")
-          f_c:write("        int idx=0;\n")
-          f_c:write("        while(lua_next(L, -2)) {\n") 
-          f_c:write("            if(lua_isstring(L, -1)) {\n")
-          f_c:write("                const char* s = lua_tostring(L, -1);\n")
-          f_c:write("                cfg_->" .. n .. ".items[idx] = strdup(s);\n")
-          f_c:write("                ++idx;\n")
+          f_c:write("        else{\n")
+          f_c:write("            cfg_->" .. n .. ".n = luaL_len(L, -1);\n")
+          f_c:write("            cfg_->" .. n .. ".items = (".. v .. "*)calloc(cfg_->" .. n .. ".n, sizeof(" .. v .. "*)); \n")
+          f_c:write("            lua_pushnil(L);\n")
+          f_c:write("            int idx=0;\n")
+          f_c:write("            while(lua_next(L, -2)) {\n") 
+          f_c:write("                if(lua_isstring(L, -1)) {\n")
+          f_c:write("                    const char* s = lua_tostring(L, -1);\n")
+          f_c:write("                    cfg_->" .. n .. ".items[idx] = strdup(s);\n")
+          f_c:write("                    ++idx;\n")
+          f_c:write("                }\n")
+          f_c:write("                lua_pop(L, 1);\n")
           f_c:write("            }\n")
-          f_c:write("            lua_pop(L, 1);\n")
-          f_c:write("        }\n")
-          f_c:write("        lua_pop(L, 1); \n")
+          f_c:write("            lua_pop(L, 1); \n")
+          f_c:write("        }\n") 
           f_c:write("    }\n") 
           end
       
