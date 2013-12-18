@@ -29,7 +29,7 @@ start()
 
 stop()
 {
-        killall mss_filter -9
+        killall $(basename ${MEXE}) -9
         
 }
 

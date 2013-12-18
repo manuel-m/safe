@@ -112,9 +112,22 @@ int64_t sbits(signed char buf[], unsigned int start, unsigned int width)
     return (int64_t) fld;
 }
 
+
+
 /*
  * Parse the data from the device
  */
+
+#ifdef SAD_ENABLE_MESSAGE_5
+# define SAD_ENABLE_MESSAGE_5_OR_19
+#endif
+
+#ifdef SAD_ENABLE_MESSAGE_19
+#define SAD_ENABLE_MESSAGE_5_OR_19
+#endif
+
+
+#ifdef SAD_ENABLE_MESSAGE_5_OR_19
 static void from_sixbit(unsigned char *bitvec, unsigned int start, int count, char *to) {
 
     const char sixchr[64] =
@@ -140,6 +153,7 @@ static void from_sixbit(unsigned char *bitvec, unsigned int start, int count, ch
             break;
     /*@ -type @*/
 }
+#endif /* SAD_ENABLE_MESSAGE_5_OR_19 */
 
 char *json_stringify(/*@out@*/ char *to,
         size_t len,
@@ -200,12 +214,9 @@ char *json_stringify(/*@out@*/ char *to,
 void json_aivdm_dump(const struct ais_t *ais,
         /*@null@*/const char *device, bool scaled_,
         /*@out@*/char *buf, size_t buflen) {
-    char buf1[JSON_VAL_MAX * 2 + 1];
-    char buf2[JSON_VAL_MAX * 2 + 1];
-    char buf3[JSON_VAL_MAX * 2 + 1];
-    char buf4[JSON_VAL_MAX * 2 + 1];
-    bool imo;
-    int i;
+//     char buf1[JSON_VAL_MAX * 2 + 1];
+
+    
 
     static char *nav_legends[] = {
         "Under way using engine",
@@ -226,6 +237,9 @@ void json_aivdm_dump(const struct ais_t *ais,
         "Not defined",
     };
 
+
+#ifdef SAD_ENABLE_MESSAGE_5_OR_19
+    
     static char *epfd_legends[] = {
         "Undefined",
         "GPS",
@@ -239,7 +253,9 @@ void json_aivdm_dump(const struct ais_t *ais,
     };
 
 #define EPFD_DISPLAY(n) (((n) < (unsigned int)NITEMS(epfd_legends)) ? epfd_legends[n] : "INVALID EPFD")
-
+    
+    
+    
     static char *ship_type_legends[100] = {
         "Not available",
         "Reserved for future use",
@@ -344,7 +360,8 @@ void json_aivdm_dump(const struct ais_t *ais,
     };
 
 #define SHIPTYPE_DISPLAY(n) (((n) < (unsigned int)NITEMS(ship_type_legends)) ? ship_type_legends[n] : "INVALID SHIP TYPE")
-
+#endif /* SAD_ENABLE_MESSAGE_5_OR_19 */
+    
     //    static const char *station_type_legends[] = {
     //        "All types of mobiles",
     //        "Reserved for future use",
@@ -403,6 +420,7 @@ void json_aivdm_dump(const struct ais_t *ais,
 
 #define NAVAIDTYPE_DISPLAY(n) (((n) < (unsigned int)NITEMS(navaid_type_legends[0])) ? navaid_type_legends[n] : "INVALID NAVAID TYPE")
 
+#ifdef SAD_ENABLE_MESSAGE_8        
     static const char *signal_legends[] = {
         "N/A",
         "Serious emergency – stop or divert according to instructions.",
@@ -458,26 +476,30 @@ void json_aivdm_dump(const struct ais_t *ais,
         "Cancel route identified by message linkage",
     };
 
+
     static char *idtypes[] = {
         "mmsi",
         "imo",
         "callsign",
         "other",
     };
+#endif /* SAD_ENABLE_MESSAGE_8 */    
+    
 
+#ifdef SAD_ENABLE_MESSAGE_6
     static const char *racon_status[] = {
         "No RACON installed",
         "RACON not monitored",
         "RACON operational",
         "RACON ERROR"
     };
-
     static const char *light_status[] = {
         "No light or no monitoring",
         "Light ON",
         "Light OFF",
         "Light ERROR"
     };
+#endif /* SAD_ENABLE_MESSAGE_6 */
 
     (void) snprintf(buf, buflen, "{\"class\":\"AIS\",");
     if (device != NULL && device[0] != '\0')
@@ -487,7 +509,7 @@ void json_aivdm_dump(const struct ais_t *ais,
             "\"type\":%u,\"repeat\":%u,\"mmsi\":%u,\"scaled\":%s,",
             ais->type, ais->repeat, ais->mmsi, JSON_BOOL(scaled_));
     /*@ -formatcode -mustfreefresh @*/
-    switch (ais->type) {
+    switch (ais->type) {     
         case 1: /* Position Report */
         case 2:
         case 3:
@@ -559,7 +581,12 @@ void json_aivdm_dump(const struct ais_t *ais,
                         JSON_BOOL(ais->type1.raim), ais->type1.radio);
             }
             break;
+#ifdef SAD_ENABLE_MESSAGE_5            
         case 5: /* Ship static and voyage related data */
+        {
+              char buf1[JSON_VAL_MAX * 2 + 1];
+              char buf2[JSON_VAL_MAX * 2 + 1];
+              char buf3[JSON_VAL_MAX * 2 + 1];
             /* some fields have beem merged to an ISO8601 partial date */
             if (scaled_) {
                 /* *INDENT-OFF* */
@@ -611,8 +638,19 @@ void json_aivdm_dump(const struct ais_t *ais,
                         ais->type5.destination),
                         ais->type5.dte);
             }
+        }
             break;
+        
+#endif /* SAD_ENABLE_MESSAGE_5 */
+#ifdef SAD_ENABLE_MESSAGE_6
         case 6: /* Binary Message */
+        {
+          char buf1[JSON_VAL_MAX * 2 + 1];
+          char buf2[JSON_VAL_MAX * 2 + 1];
+          char buf3[JSON_VAL_MAX * 2 + 1];
+          char buf4[JSON_VAL_MAX * 2 + 1];
+          int imo = false;
+          int i;
             (void) snprintf(buf + strlen(buf), buflen - strlen(buf),
                     "\"seqno\":%u,\"dest_mmsi\":%u,"
                     "\"retransmit\":%s,\"dac\":%u,\"fid\":%u,",
@@ -621,8 +659,6 @@ void json_aivdm_dump(const struct ais_t *ais,
                     JSON_BOOL(ais->type6.retransmit),
                     ais->type6.dac,
                     ais->type6.fid);
-            imo = false;
-
             if (ais->type6.dac == 235 || ais->type6.dac == 250) {
                 switch (ais->type6.fid) {
                     case 10: /* GLA - AtoN monitoring data */
@@ -919,9 +955,17 @@ void json_aivdm_dump(const struct ais_t *ais,
                     json_stringify(buf1, sizeof (buf1),
                     gpsd_hexdump((char *) ais->type6.bitdata,
                     (ais->type6.bitcount + 7) / 8)));
+        }
             break;
+#endif /* SAD_ENABLE_MESSAGE_6  */
+#ifdef SAD_ENABLE_MESSAGE_8       
         case 8: /* Binary Broadcast Message */
-            imo = false;
+        {
+          char buf1[JSON_VAL_MAX * 2 + 1];
+          char buf2[JSON_VAL_MAX * 2 + 1];
+          char buf3[JSON_VAL_MAX * 2 + 1];
+         int  imo = false;
+         int i;
             (void) snprintf(buf + strlen(buf), buflen - strlen(buf),
                     "\"dac\":%u,\"fid\":%u,", ais->type8.dac, ais->type8.fid);
             if (ais->type8.dac == 1) {
@@ -1381,7 +1425,11 @@ void json_aivdm_dump(const struct ais_t *ais,
                     json_stringify(buf1, sizeof (buf1),
                     gpsd_hexdump((char *) ais->type8.bitdata,
                     (ais->type8.bitcount + 7) / 8)));
+        }
             break;
+#endif /* SAD_ENABLE_MESSAGE_8  */  
+            
+#ifdef SAD_ENABLE_MESSAGE_9            
         case 9: /* Standard SAR Aircraft Position Report */
             if (scaled_) {
                 char altlegend[20];
@@ -1444,6 +1492,8 @@ void json_aivdm_dump(const struct ais_t *ais,
                         JSON_BOOL(ais->type9.raim), ais->type9.radio);
             }
             break;
+#endif /* SAD_ENABLE_MESSAGE_9 */
+#ifdef SAD_ENABLE_MESSAGE_18            
         case 18:
             if (scaled_) {
                 (void) snprintf(buf + strlen(buf), buflen - strlen(buf),
@@ -1491,7 +1541,11 @@ void json_aivdm_dump(const struct ais_t *ais,
                         JSON_BOOL(ais->type18.raim), ais->type18.radio);
             }
             break;
+#endif /* SAD_ENABLE_MESSAGE_18 */
+#ifdef SAD_ENABLE_MESSAGE_19
         case 19:
+        {
+          char buf1[JSON_VAL_MAX * 2 + 1];
             if (scaled_) {
                 (void) snprintf(buf + strlen(buf), buflen - strlen(buf),
                         "\"reserved\":%u,\"speed\":%.1f,\"accuracy\":%s,"
@@ -1549,7 +1603,10 @@ void json_aivdm_dump(const struct ais_t *ais,
                         JSON_BOOL(ais->type19.raim),
                         ais->type19.dte, JSON_BOOL(ais->type19.assigned));
             }
+        }
             break;
+#endif /* SAD_ENABLE_MESSAGE_19 */
+#ifdef SAD_ENABLE_MESSAGE_26
         case 26: /* Binary Message, Multiple Slot */
             (void) snprintf(buf + strlen(buf), buflen - strlen(buf),
                     "\"addressed\":%s,\"structured\":%s,\"dest_mmsi\":%u,"
@@ -1563,6 +1620,8 @@ void json_aivdm_dump(const struct ais_t *ais,
                     (ais->type26.bitcount + 7) / 8),
                     ais->type26.radio);
             break;
+#endif /* SAD_ENABLE_MESSAGE_26 */
+#ifdef SAD_ENABLE_MESSAGE_27            
         case 27: /* Long Range AIS Broadcast message */
             if (scaled_)
                 (void)snprintf(buf + strlen(buf), buflen - strlen(buf),
@@ -1591,13 +1650,14 @@ void json_aivdm_dump(const struct ais_t *ais,
                     JSON_BOOL(ais->type27.raim),
                     JSON_BOOL(ais->type27.gnss));
             break;
+#endif /* SAD_ENABLE_MESSAGE_27 */            
         default:
             if (buf[strlen(buf) - 1] == ',')
                 buf[strlen(buf) - 1] = '\0';
             (void) strlcat(buf, "}\r\n", buflen);
             break;
-    }
-    /*@ +formatcode +mustfreefresh @*/
+    } /* end switch */
+    
 }
 
 
@@ -1876,7 +1936,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                         break;
 
 
-
+#ifdef SAD_ENABLE_MESSAGE_5                  
                         /**
                          * message 5
                          */
@@ -1906,14 +1966,15 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                         ais->type5.dte = MMUBITS(422, 1);
                         //ais->type5.spare        = UBITS(423, 1);
                         break;
+#endif /* SAD_ENABLE_MESSAGE_5 */                       
 
 
-#ifdef SAD_WITH_MESS27                        
+#ifdef SAD_ENABLE_MESSAGE_27                  
                         /**
                          * message 27
                          */
                     case 27: /* IMO289 - Route information - broadcast */
-                        ç ais->type8.dac1fid27.linkage = MMUBITS(56, 10);
+                        ais->type8.dac1fid27.linkage = MMUBITS(56, 10);
                         ais->type8.dac1fid27.sender = MMUBITS(66, 3);
                         ais->type8.dac1fid27.rtype = MMUBITS(69, 5);
                         ais->type8.dac1fid27.month = MMUBITS(74, 4);
@@ -1933,10 +1994,9 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 #undef ELEMENT_SIZE
                         break;
 
+#endif /* SAD_ENABLE_MESSAGE_27 */
 
-
-#endif /* SAD_WITH_MESS27 */
-
+#ifdef SAD_ENABLE_MESSAGE_18                        
                         /**
                          * message 18
                          */
@@ -1967,10 +2027,9 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                         ais->type18.radio = MMUBITS(148, 20);
                         break;
 
-
-                        //#include "sad_mess24.c" 
-
-
+#endif /* SAD_ENABLE_MESSAGE_18 */
+                        
+#ifdef SAD_ENABLE_MESSAGE_19                       
                         /**
                          * message 19
                          */
@@ -2003,8 +2062,9 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                         //ais->type19.spare      = MMUBITS(307, 5);
                         break;
 
+#endif /* SAD_ENABLE_MESSAGE_19 */ 
 
-
+#ifdef SAD_ENABLE_MESSAGE_9
                         /**
                          * message 9
                          */
@@ -2029,10 +2089,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                         ais->type9.raim = MMUBITS(147, 1) != 0;
                         ais->type9.radio = MMUBITS(148, 19);
                         break;
-
-
-
-
+#endif /* SAD_ENABLE_MESSAGE_9 */                         
 
                 }
                 ++(filter_->types[ais->type - 1]);
