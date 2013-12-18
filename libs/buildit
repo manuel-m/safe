@@ -5,20 +5,6 @@ LIBLUA_ID=lua-5.2.2
 
 ROOT_PWD=$(pwd)
 
-#libuv
-if [ ! -d ${LIBUV_ID} ]; then rm -rf ${LIBUV_ID};fi
-tar xvfz ${LIBUV_ID}.tgz
-cd libuv
-
-if [ $1 ]; then
-  if [ ${1}X==winX ]; then
-  make -f Makefile.mingw
-  exit 0
-  fi
-fi
-
-
-./autogen.sh && ./configure && make 
 
 #liblua
 cd ${ROOT_PWD}
@@ -27,7 +13,24 @@ tar xvfz ${LIBLUA_ID}.tgz
 cd ${LIBLUA_ID}
 make linux 
 
+
+#libuv
 cd ${ROOT_PWD}
+if [ ! -d ${LIBUV_ID} ]; then rm -rf ${LIBUV_ID};fi
+tar xvfz ${LIBUV_ID}.tgz
+cd libuv
+
+if [ $1 ]; then
+  if [ ${1}X==winX ]; then
+     make -f Makefile.mingw
+  fi
+else
+  which gyp || echo "install gyp"
+  ./gyp_uv.py -f make && make -C out
+  
+fi
 
 
 
+
+# 

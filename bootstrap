@@ -1,2 +1,3 @@
 current_pwd=$(pwd)
-cd libs && ./buildit && cd $current_pwd && ./mmsdk.lua api/mss_filter.lua 
+cd libs && ./buildit
+cd ${current_pwd} && ./mmsdk.lua api/mss_filter.lua 

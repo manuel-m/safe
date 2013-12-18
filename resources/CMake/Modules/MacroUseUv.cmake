@@ -2,7 +2,8 @@ MACRO(macro_use_uv)
 
 #uv
 set( CURRENT_UV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/libuv )
-set (UV_A ${CURRENT_UV_DIR}/.libs/libuv.a)
+#set (UV_A ${CURRENT_UV_DIR}/.libs/libuv.a)
+set (UV_A ${CURRENT_UV_DIR}/out/Debug/obj.target/libuv.a )
 include_directories (${CURRENT_UV_DIR}/include)
 
 
