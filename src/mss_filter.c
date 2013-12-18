@@ -14,7 +14,6 @@
 
 #define HELP_USAGE "usage: mss_filter cfg_file" 
 
-
 static sad_filter_t filter;
 
 static struct mss_filter_config_s config;
@@ -50,7 +49,7 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
         if (0 == strncmp(last_sentence, sentence->start, sentence->n)) {
             /* drop duplicate */
 #ifdef NDEBUG            
-            printf("[KO] drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
+            MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
                     filter_->sentences,
                     ais->type,
                     ais->mmsi,

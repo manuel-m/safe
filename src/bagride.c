@@ -1,16 +1,29 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "bagride.h"
 #include "sub0.h"
 #include "mmtrace.h"
 
-#define BR_VECTOR_IMPL(TYPE_ELEM) \
-int TYPE_ELEM##s_init(TYPE_ELEM##s_t* uc_, size_t n_){ \
-    uc_->n = n_; \
-    uc_->items = (TYPE_ELEM##_t*) calloc(uc_->n, sizeof (TYPE_ELEM##_t)); \
-    if (NULL == uc_->items) return -1; \
-    return 0; \
-} 
+
+static int br_isipv4(const char *ip_, size_t size_)
+{
+    int i;
+    long int j;
+    const char *start;
+    char *end;
+
+    for (i = 0, start = ip_; i < 4; i++, start = end + 1)
+    {
+        if (!isdigit((int) (unsigned char) *start)) return 0;
+        errno = 0;
+        j = strtol(start, &end, 10);
+        if (j > 255) return 0;
+        if (errno != 0 || j < 0 || j > 255) return 0;
+    }
+    if (i < 4 || end != ip_ + size_) return 0;
+    return 1;
+}
 
 void br_tcp_servers_close(mmpool_t* srv_pool_) {
 
@@ -205,13 +218,51 @@ int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
     return 0;
 }
 
+static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
+        struct addrinfo *res_) {
+
+    br_udp_client_t* cli = (br_udp_client_t*) resolver_->data;
+
+    if (0 > status_) {
+        MM_ERR("dns failed for:%s", cli->m_addr);
+        return;
+    }
+    {
+        char ip_addr[17] = {'\0'};
+        uv_ip4_name((struct sockaddr_in*) res_->ai_addr, ip_addr, 16);
+        MM_INFO("%s=%s", cli->m_addr, ip_addr);
+    }
+    uv_udp_bind(&cli->m_handler, (const struct sockaddr*) res_->ai_addr, 0);
+    
+    free(resolver_);
+    uv_freeaddrinfo(res_);
+}
+
+
+
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
-    if (0 > uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr)) {
-        MM_ERR("bind %s:%d", cli_->m_addr, cli_->m_port);
-        return -1;
+    
+    /* invalid ip, so we try a DNS resolution */
+    if (0 ==  br_isipv4(cli_->m_addr, strlen(cli_->m_addr))) {
+        uv_getaddrinfo_t* resolver = calloc(1, sizeof(uv_getaddrinfo_t));
+        struct addrinfo hints;
+        hints.ai_family = PF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+        hints.ai_flags = 0;
+        resolver->data = cli_;
+
+        /* DNS resolution error */
+        if (0 > uv_getaddrinfo(uv_default_loop(),resolver,
+                on_resolved_udp_client, cli_->m_addr, NULL, &hints)){
+            MM_ERR("dns resolution failed for:%s", cli_->m_addr);
+            return -1;
+        }
+        
+    } else {
+        uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
     }
-    uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
     return 0;
 }
 
@@ -252,7 +303,7 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
 }
 
 void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
-    
+
     mmpool_iter_t iter = {
         .m_index = 0,
         .m_pool = cli_pool_
@@ -260,7 +311,7 @@ void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
 
     br_udp_client_t* pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
 
-    while (pclient) {    
+    while (pclient) {
         br_udp_client_send(pclient, str_);
         pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
     }
