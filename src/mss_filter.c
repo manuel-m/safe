@@ -71,8 +71,10 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
             forward_sentence[sentence->n] = '\n';
             forward_sentence[sentence->n + 1] = '\0';
 
+#ifdef MM_ULTRADEBUG
             printf("[ok] %08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
                     filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
+#endif /* MM_ULTRADEBUG */
 
             br_udp_clients_send(udp_clients, forward_sentence);
             br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
