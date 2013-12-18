@@ -23,7 +23,7 @@ start()
 {
     for f in $(ls -1 ${MCONF_DIR}/*.conf); do
         echo "[INFO] starting ${MEXEC} $f"
-        ${MEXE} ${f} &> /dev/null &
+        ${MEXE} ${f} &
     done
 }
 
