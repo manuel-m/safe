@@ -76,7 +76,10 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
                     filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
 #endif /* MM_ULTRADEBUG */
 
-            br_udp_clients_send(udp_clients, forward_sentence);
+            if(0 < config.ais_out_udp.n){
+              br_udp_clients_send(udp_clients, forward_sentence);
+            }
+            
             br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
                     forward_sentence, sentence->n + 1);
         }
