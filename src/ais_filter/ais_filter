@@ -37,13 +37,15 @@ start()
 
 stop()
 {
-        killall $(basename ${MEXE}) -9
+        #only process older than 1s to prevent self kill
+        killall -o 1s $(basename ${MEXE}) -9
         
 }
 
 restart()
 {
         stop
+        sleep 2
         start
 }
 
