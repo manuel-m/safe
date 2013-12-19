@@ -37,8 +37,7 @@ start()
 
 stop()
 {
-        #only process older than 1s to prevent self kill
-        killall -o 1s $(basename ${MEXE}) -9
+        killall $(basename ${MEXE}) -9
         
 }
 
@@ -64,7 +63,7 @@ case "$1" in
         restart
         ;;
   *)
-        echo $"Usage: service ais {start|stop|restart|status}"
+        echo $"Usage: service aisf {start|stop|restart|status}"
         exit 1
 esac
 
