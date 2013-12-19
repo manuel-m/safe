@@ -22,9 +22,17 @@ static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static mmpool_t* udp_clients = NULL;
+
+
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
+
+
+// static uv_udp_t udp_client;
+
+
+
 
 
 
@@ -73,7 +81,7 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
             forward_sentence[sentence->n + 1] = '\0';
 
 #ifdef MM_ULTRADEBUG
-            printf("[ok] %08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
+            MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
                     filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
 #endif /* MM_ULTRADEBUG */
 
@@ -149,7 +157,13 @@ int main(int argc, char **argv) {
                           on_tcp_parse,
                           config.ais_tcp_server.max_connections);
     }    
-
+    
+//     {
+//       int r;
+//       r = uv_udp_init(uv_default_loop(), &udp_client);
+//       
+//       
+//     }
 
     br_run();
 

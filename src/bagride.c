@@ -5,6 +5,8 @@
 #include "sub0.h"
 #include "mmtrace.h"
 
+
+
 static int br_isipv4(const char *ip_, size_t size_) {
     int i;
     long int j;
@@ -156,7 +158,6 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
         return;
 
     }
-
     pclient = (uv_tcp_t *) client_pool_item->m_p;
 
     uv_tcp_init(uv_default_loop(), pclient);
@@ -181,12 +182,20 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
 int br_udp_server_add(mmpool_t* srv_pool_, int port_, void* user_parse_cb_) {
 
     mmpool_item_t* pool_item = mmpool_take(srv_pool_);
+    int r;
     if (NULL == pool_item) return -1;
     br_udp_server_t* server = (br_udp_server_t*) pool_item->m_p;
     server->m_port = port_;
     server->m_user_parse_cb = user_parse_cb_;
     MM_INFO("udp in %d", server->m_port);
-    uv_udp_init(uv_default_loop(), &server->m_handler);
+    
+    r = uv_udp_init(uv_default_loop(), &server->m_handler);
+    if(0 != r){
+      MM_ERR("udp server init failed: %s", uv_strerror(r));
+      return -1;
+    }
+    
+    
     server->m_handler.data = server;
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_udp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr, 0));
@@ -225,14 +234,16 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
         MM_ERR("dns failed for:%s", cli->m_addr);
         return;
     }
+    else
     {
         char ip_addr[17] = {'\0'};
         uv_ip4_name((struct sockaddr_in*) res_->ai_addr, ip_addr, 16);
-        MM_INFO("%s=%s", cli->m_addr, ip_addr);
+        MM_INFO("%s.ip=%s", cli->m_addr, ip_addr);
+        strcpy(cli->m_addr, ip_addr);
+        int r = uv_ip4_addr(cli->m_addr, cli->m_port, &cli->m_socketaddr);
+        if(0 != r) MM_ERR("bad resolving:%s, %s", uv_strerror(r));
     }
-    int r = uv_udp_bind(&cli->m_handler, (const struct sockaddr*) res_->ai_addr, 0);
-    (void)r;
-//    if(0 != r) MM_ERR("bind:%s", uv_strerror(r));
+
 
 
     free(resolver_);
@@ -240,8 +251,12 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
 }
 
 int br_udp_client_register(br_udp_client_t* cli_) {
-    uv_udp_init(uv_default_loop(), &cli_->m_handler);
-    int r;
+    
+    int r = uv_udp_init(uv_default_loop(), &cli_->m_handler);
+    if (0 != r) {
+        MM_ERR("new udp client failed :%s",uv_strerror(r));
+            return -1;
+    }    
 
     /* invalid ip, so we try a DNS resolution */
     if (0 == br_isipv4(cli_->m_addr, strlen(cli_->m_addr))) {
@@ -263,12 +278,12 @@ int br_udp_client_register(br_udp_client_t* cli_) {
         }
 
     } else {
-//        r = uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
-//        if (0 != r) {
-//            MM_ERR("bind failed for:%s, %s", cli_->m_addr,uv_strerror(r));
-//            return -1;
-//        }
-        uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
+      
+        r = uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr);
+        if (0 != r) {
+           MM_ERR("invalid address:%s, %s", cli_->m_addr,uv_strerror(r));
+           return -1;
+       }
         
     }
     return 0;
