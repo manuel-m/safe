@@ -29,13 +29,18 @@ set(EXECUTABLE_OUTPUT_PATH ${DIST_DIR})
 set(LIBRARY_OUTPUT_PATH ${DIST_DIR})
 
 set(AIS_FILTER ais_filter)
+set(AIS_SERVER ais_server)
+
 set(AIS_FILTER_EXE ${AIS_FILTER})
+set(AIS_SERVER_EXE ${AIS_SERVER})
+
 set(LIBMM_SRC src/lib)
 set(LIBMM_A mm)
 
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(AIS_FILTER_EXE "${AIS_FILTER_EXE}_d")
+  set(AIS_SERVER_EXE "${AIS_SERVER_EXE}_d")
   set(LIBMM_A "${LIBMM_A}_d")
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
 
@@ -50,13 +55,22 @@ add_library(${LIBMM_A}
             ${LIBMM_SRC}/bagride.c 
             ${LIBMM_SRC}/sad.c)
 
-add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}_config.c src/${AIS_FILTER}/${AIS_FILTER}.c )
 
+#ais filter            
+add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}_config.c src/${AIS_FILTER}/${AIS_FILTER}.c )
 target_link_libraries (${AIS_FILTER_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
 target_link_libraries (${AIS_FILTER_EXE} -lpthread -lrt -lm)
 
 
+#ais server            
+add_executable (${AIS_SERVER_EXE} src/${AIS_SERVER}/${AIS_SERVER}_config.c src/${AIS_SERVER}/${AIS_SERVER}.c )
+target_link_libraries (${AIS_SERVER_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
+target_link_libraries (${AIS_SERVER_EXE} -lpthread -lrt -lm)
+
+
+
 if (CMAKE_BUILD_TYPE MATCHES Release)
    install(TARGETS ${AIS_FILTER_EXE} DESTINATION bin)
+   install(TARGETS ${AIS_SERVER_EXE} DESTINATION bin)
 endif (CMAKE_BUILD_TYPE MATCHES Release)
 

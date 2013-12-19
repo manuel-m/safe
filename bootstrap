@@ -1,8 +1,16 @@
 #!/bin/bash
 
 current_pwd=$(pwd)
-cd libs && ./buildit
 
-PROJ=ais_filter
+if [ ! $1X = nolibsX ]; then
+    cd libs && ./buildit
+fi
 
-cd ${current_pwd} && ./mmsdk.lua src/${PROJ}/${PROJ}_config_api.lua
+
+PROJ="ais_filter ais_server"
+
+for f in ${PROJ}; do
+    cd ${current_pwd} 
+    echo "generating ${f}"
+    ./mmsdk.lua src/${f}/${f}_config_api.lua
+done

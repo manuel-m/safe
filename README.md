@@ -21,10 +21,12 @@ build instructions
 - see buildit_win script on windows (mingw expected in /c/Mingw)
 - for convenience, win32/mss_filter32.exe is provided
 
+- ./boostrap nolibs to avoid libuv.a liblua.a build
+
 usage
 =====
 
-ais_filter ./ais_config.conf
+ais_filter /path/to/ais_filter.conf
 
 
 TODO

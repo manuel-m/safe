@@ -1,0 +1,30 @@
+-- configuration file for program 'mss_server'
+
+-- admin_http_port
+-- watch -n 0,05 -t curl -s localhost:9997
+admin_http_port = 9997
+
+-- ais_udp_in_port
+ais_udp_in_port = 9990
+
+-- ais_tcp_server
+ais_tcp_server = { 
+                     name            = "ais_in",
+                     port            = 9999,
+                     max_connections = 32
+}
+
+
+-- geographical server
+geoserver = { 
+               x1 = -16.0, 
+               y1 = 45.0, 
+               x2 = 9.0, 
+               y2 = 36.0 
+            }
+
+--  ais out put is not mandatory
+ ais_out_udp = {  
+                 "192.168.200.13:9993",
+                 "l18:9993",
+               }
