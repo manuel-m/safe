@@ -48,7 +48,7 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
 
         if (0 == strncmp(last_sentence, sentence->start, sentence->n)) {
             /* drop duplicate */
-#ifdef NDEBUG            
+#ifndef NDEBUG            
             MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
                     filter_->sentences,
                     ais->type,
@@ -105,6 +105,7 @@ int main(int argc, char **argv) {
 
     if (2 > argc) MM_GERR;
 
+    MM_INFO("version=\"%s\"", MM_VERSION_INFO );
     MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
     if (0 > ais_filter_config_load(&config,argv[1])) MM_GERR;

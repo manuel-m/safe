@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # chkconfig: 2345 85 15
-# description: Starts and stops mss_filter
+# description: Starts and stops ais_filter
 
 # Source function library.
 if [ -f /etc/rc.d/functions ];
@@ -9,22 +9,30 @@ then
     . /etc/init.d/functions
 fi
 
-MEXE=/usr/local/bin/mss_filter
-MCONF_DIR=/etc/mss_filter
-MLOG=/var/log/mss_filter.log
+MEXE=/usr/local/bin/ais_filter
+MCONF_DIR=/etc/ais_filter
+MLOG=/var/log/ais_filter.log
+
+sanity()
+{
+        [ -f ${MEXE} ] || echo "[ ERR] missing ${MEXE}"
+        [ -d ${MCONF_DIR} ] || echo "[ ERR] missing ${MCONF_DIR}"
+}
 
 status()
 {
+        sanity
         netstat -plunt | grep $(basename ${MEXE})      
 }
 
 
 start()
 {
-    for f in $(ls -1 ${MCONF_DIR}/*.conf); do
-        echo "[INFO] starting ${MEXEC} $f"
-        ${MEXE} ${f} &
-    done
+        sanity
+        for f in $(ls -1 ${MCONF_DIR}/*.conf); do
+            echo "[INFO] starting ${MEXEC} $f"
+            ${MEXE} ${f} &
+        done
 }
 
 stop()
@@ -54,7 +62,7 @@ case "$1" in
         restart
         ;;
   *)
-        echo $"Usage: service mss {start|stop|restart|status}"
+        echo $"Usage: service ais {start|stop|restart|status}"
         exit 1
 esac
 

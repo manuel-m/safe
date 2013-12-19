@@ -1,23 +1,24 @@
-#ifndef __MSS_FILTER_CONFIG
-#define __MSS_FILTER_CONFIG
+#ifndef __AIS_FILTER_CONFIG
+#define __AIS_FILTER_CONFIG
     
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
+#define MM_VERSION_INFO "v0.1 2013-12-19_17h12"
 struct ais_filter_config_s{
     struct {
-         double y2;
-         double x2;
-         double x1;
-         double y1;
-    } geofilter;
-    int admin_http_port;
-    struct {
-         int port;
          char* name;
          int max_connections;
+         int port;
     } ais_tcp_server;
+    int admin_http_port;
+    struct {
+         double x1;
+         double y2;
+         double x2;
+         double y1;
+    } geofilter;
     int ais_udp_in_port;
     struct {
      int n;
@@ -33,4 +34,4 @@ int ais_filter_config_default(const char* f_);
 }
 #endif
 
-#endif /* __MSS_FILTER_CONFIG */ 
+#endif /* __AIS_FILTER_CONFIG */ 

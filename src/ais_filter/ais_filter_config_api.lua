@@ -4,8 +4,8 @@
 mmapi_m = {
   basename = "ais_filter_config",
   dirname = "src/ais_filter",
-  version = "0",
-  define = "__MSS_FILTER_CONFIG"
+  version = "0.1",
+  define = "__AIS_FILTER_CONFIG"
 }
 
 -- logical definition
