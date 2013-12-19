@@ -22,16 +22,14 @@ static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
 static mmpool_t* udp_clients = NULL;
+
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
 
 
-
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
-    
-    
     return 0;
 }
 
@@ -72,10 +70,10 @@ static int on_ais_decoded(struct sad_filter_s * filter_) {
             forward_sentence[sentence->n] = '\n';
             forward_sentence[sentence->n + 1] = '\0';
 
-// #ifdef MM_ULTRADEBUG
-            printf("[ok] %08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
+#ifdef MM_ULTRADEBUG
+            MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
                     filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
-// #endif /* MM_ULTRADEBUG */
+#endif /* MM_ULTRADEBUG */
 
             if(0 < config.ais_out_udp.n){
               br_udp_clients_send(udp_clients, forward_sentence);
@@ -149,8 +147,6 @@ int main(int argc, char **argv) {
                           on_tcp_parse,
                           config.ais_tcp_server.max_connections);
     }    
-
-
     br_run();
 
 #undef MM_GERR
