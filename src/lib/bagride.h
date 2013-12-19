@@ -66,7 +66,14 @@ typedef struct br_udp_client_s {
 typedef int (*br_udp_server_parser_cb)(ssize_t nread_, const br_buf_t* pbuf_, 
         br_udp_server_t* pserver_);
 
-int br_udp_client_register(br_udp_client_t* cli_);
+
+/**
+ * @param cli_pool_item
+ *   mmpool_item_t instead of handle
+ *    to rollback if needed (bad DNS resolution)
+ * @return 0 on success
+ */
+int br_udp_client_register(mmpool_item_t* cli_pool_item_);
 
 /**
  * http

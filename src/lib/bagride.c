@@ -228,10 +228,12 @@ int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
 static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
         struct addrinfo *res_) {
 
-    br_udp_client_t* cli = (br_udp_client_t*) resolver_->data;
+    mmpool_item_t* cli_pool_item = (mmpool_item_t*) resolver_->data;
+    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item->m_p;
 
     if (0 > status_) {
-        MM_ERR("dns failed for:%s", cli->m_addr);
+        MM_ERR("dns failed for:%s %s", cli->m_addr,uv_strerror(status_));
+        mmpool_giveback(cli_pool_item);
         return;
     }
     else
@@ -248,37 +250,38 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
     uv_freeaddrinfo(res_);
 }
 
-int br_udp_client_register(br_udp_client_t* cli_) {
+int br_udp_client_register(mmpool_item_t* cli_pool_item_) {
     
-    int r = uv_udp_init(uv_default_loop(), &cli_->m_handler);
+    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item_->m_p;
+    int r = uv_udp_init(uv_default_loop(), &cli->m_handler);
     if (0 != r) {
         MM_ERR("new udp client failed :%s",uv_strerror(r));
             return -1;
     }    
 
     /* invalid ip, so we try a DNS resolution */
-    if (0 == br_isipv4(cli_->m_addr, strlen(cli_->m_addr))) {
+    if (0 == br_isipv4(cli->m_addr, strlen(cli->m_addr))) {
         uv_getaddrinfo_t* resolver = calloc(1, sizeof (uv_getaddrinfo_t));
         struct addrinfo hints;
         hints.ai_family = PF_INET;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = 0;
-        resolver->data = cli_;
+        resolver->data = cli_pool_item_;
 
         /* DNS resolution error */
         r = uv_getaddrinfo(uv_default_loop(), resolver,
-                on_resolved_udp_client, cli_->m_addr, NULL, &hints);
+                on_resolved_udp_client, cli->m_addr, NULL, &hints);
         
         if (0 != r) {
-            MM_ERR("dns resolution failed for:%s, %s", cli_->m_addr,uv_strerror(r));
+            MM_ERR("dns resolution failed for:%s, %s", cli->m_addr,uv_strerror(r));
             return -1;
         }
 
     } else {
-        r = uv_ip4_addr(cli_->m_addr, cli_->m_port, &cli_->m_socketaddr);
+        r = uv_ip4_addr(cli->m_addr, cli->m_port, &cli->m_socketaddr);
         if (0 != r) {
-           MM_ERR("invalid address:%s, %s", cli_->m_addr,uv_strerror(r));
+           MM_ERR("invalid address:%s, %s", cli->m_addr,uv_strerror(r));
            return -1;
        }
     }
@@ -307,7 +310,7 @@ int br_udp_client_add(mmpool_t* cli_pool_, const char* target_) {
     sub = sub0_line_next_substring(&line);
     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
     cli->m_port = atoi(sub->start);
-    if (0 > br_udp_client_register(cli)) return -1;
+    if (0 > br_udp_client_register(pool_item)) return -1;
     return 0;
 }
 

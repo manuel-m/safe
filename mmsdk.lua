@@ -144,7 +144,10 @@ function mmgen_api_c()
     
     -- config close
     f_c:write("void " .. mmapi_m.basename .. "_close(" .. api_t .. "* cfg_)\n{\n")
-     
+
+    -- void list trigger build error
+    f_c:write("(void)cfg_; \n")
+ 
     for n,v in pairs(mmapi_list) do -- iter on list params
       
         -- only char*

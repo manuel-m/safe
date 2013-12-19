@@ -27,5 +27,5 @@ mmapi = {
 }
     --  lists 
 mmapi_list = {
-         ais_out_udp = "char*",
+
 }

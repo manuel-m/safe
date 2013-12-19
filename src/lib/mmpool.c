@@ -51,11 +51,10 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
     return NULL;
 }
 
-int mmpool_giveback(mmpool_item_t* item_) {
+void mmpool_giveback(mmpool_item_t* item_) {
     
     --(item_->m_parent->m_taken_len);
     item_->m_state = 0;
-    return 0;
 }
 
 void mmpool_free(mmpool_t* pool_) {
@@ -77,10 +76,12 @@ void mmpool_iter_init(mmpool_iter_t* iter_, mmpool_t* pool_){
 }
 
 void* mmpool_iter_next(mmpool_iter_t* iter_){
-    if(iter_->m_index < iter_->m_pool->m_alloc_len){
-        void *p = iter_->m_pool->items[iter_->m_index]->m_p;
+    const mmpool_t* pool = iter_->m_pool;
+    while(iter_->m_index < pool->m_alloc_len){
+        mmpool_item_t* item = pool->items[iter_->m_index];
         ++(iter_->m_index);
-        return p;
+        /* only if valid */
+        if(item->m_state) return item->m_p;
     }
     return NULL;
 }

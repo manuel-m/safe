@@ -21,8 +21,6 @@ static struct ais_server_config_s config;
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
 
-static mmpool_t* udp_clients = NULL;
-
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
@@ -75,9 +73,6 @@ static int on_ais_decoded(struct sad_filter_s * server_) {
                     server_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
 #endif /* MM_ULTRADEBUG */
 
-            if(0 < config.ais_out_udp.n){
-              br_udp_clients_send(udp_clients, forward_sentence);
-            }
             
             br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
                     forward_sentence, sentence->n + 1);
@@ -112,18 +107,6 @@ int main(int argc, char **argv) {
 
     MM_INFO("geoserver={x1=%f,y1=%f,x2=%f,y2=%f}", config.geoserver.x1, 
             config.geoserver.y1, config.geoserver.x2, config.geoserver.y2);
-    
-    /* udp client init */
-    if(0 < config.ais_out_udp.n)
-    {
-        if (NULL == (udp_clients = mmpool_new(config.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
-        int idx;
-        for(idx=0;idx<config.ais_out_udp.n;idx++){
-          const char* s = config.ais_out_udp.items[idx];
-            if (0 > br_udp_client_add(udp_clients, s)) MM_GERR;
-            MM_INFO("ais_out_udp[%d]=\"%s\"", (idx+1),s);
-        }
-    }
         
     if (sad_filter_init(&server, on_ais_decoded, NULL)) MM_GERR;
 
@@ -156,7 +139,6 @@ end:
 
     /* cleaning */
     {
-        mmpool_free(udp_clients);
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
         br_tcp_servers_close(tcp_servers);

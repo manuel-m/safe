@@ -16,7 +16,7 @@ extern "C" {
     struct mmpool_s;
     
     typedef struct mmpool_item_s {
-        int m_state; /* 0:free 1:used */
+        int m_state; /* 0:invalid 1:valid */
         struct mmpool_s* m_parent;
         void* m_p; /* internal data */
     } mmpool_item_t;
@@ -36,7 +36,7 @@ extern "C" {
 #define mmpool_taken_len(PPOOL) PPOOL->m_taken_len 
 
     mmpool_item_t* mmpool_take(mmpool_t* pool_);
-    int mmpool_giveback(mmpool_item_t* item_);
+    void mmpool_giveback(mmpool_item_t* item_);
     void mmpool_free(mmpool_t* pool_);
     
     typedef struct mmpool_iter_s {

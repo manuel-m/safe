@@ -27,4 +27,5 @@ geofilter = {
  ais_out_udp = {  
                  "192.168.200.13:9993",
                  "l18:9993",
+                 "localhost:9993",
                }
