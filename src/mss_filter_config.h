@@ -7,17 +7,17 @@ extern "C" {
 
 struct mss_filter_config_s{
     int admin_http_port;
+    int ais_udp_in_port;
     struct {
+         double y2;
          double x2;
          double y1;
          double x1;
-         double y2;
     } geofilter;
-    int ais_udp_in_port;
     struct {
-         char* name;
          int max_connections;
          int port;
+         char* name;
     } ais_tcp_server;
     struct {
      int n;

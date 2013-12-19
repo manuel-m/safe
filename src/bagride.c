@@ -231,8 +231,7 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
         MM_INFO("%s=%s", cli->m_addr, ip_addr);
     }
     int r = uv_udp_bind(&cli->m_handler, (const struct sockaddr*) res_->ai_addr, 0);
-    (void)r;
-//    if(0 != r) MM_ERR("bind:%s", uv_strerror(r));
+   if(0 != r) MM_WARN("udp bind:%s", uv_strerror(r));
 
 
     free(resolver_);
@@ -263,12 +262,12 @@ int br_udp_client_register(br_udp_client_t* cli_) {
         }
 
     } else {
-//        r = uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
-//        if (0 != r) {
-//            MM_ERR("bind failed for:%s, %s", cli_->m_addr,uv_strerror(r));
+       r = uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
+       if (0 != r) {
+           MM_WARN("udp bind failed for:%s, %s", cli_->m_addr,uv_strerror(r));
 //            return -1;
-//        }
-        uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
+       }
+//         uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
         
     }
     return 0;
