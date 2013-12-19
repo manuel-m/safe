@@ -5,16 +5,13 @@
 #include "sub0.h"
 #include "mmtrace.h"
 
-
-static int br_isipv4(const char *ip_, size_t size_)
-{
+static int br_isipv4(const char *ip_, size_t size_) {
     int i;
     long int j;
     const char *start;
     char *end;
 
-    for (i = 0, start = ip_; i < 4; i++, start = end + 1)
-    {
+    for (i = 0, start = ip_; i < 4; i++, start = end + 1) {
         if (!isdigit((int) (unsigned char) *start)) return 0;
         errno = 0;
         j = strtol(start, &end, 10);
@@ -164,18 +161,19 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
 
     uv_tcp_init(uv_default_loop(), pclient);
     pclient->data = client_pool_item;
+    
+    int r = uv_accept(server_handle_, (uv_stream_t*) pclient);
 
-    if (0 == uv_accept(server_handle_, (uv_stream_t*) pclient)) {
-
+    if (0 == r) {
         MM_INFO("%s:%d connect (%d/%d) (serv:%p cli:%p)",
                 server->m_name,
                 server->m_port,
                 server->m_clients->m_taken_len,
                 server->m_clients->m_max,
                 server_handle_, pclient);
-
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
+        MM_ERR("connection failed:%s", uv_strerror(r));
         uv_close((uv_handle_t*) pclient, on_close);
     }
 }
@@ -232,20 +230,22 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
         uv_ip4_name((struct sockaddr_in*) res_->ai_addr, ip_addr, 16);
         MM_INFO("%s=%s", cli->m_addr, ip_addr);
     }
-    uv_udp_bind(&cli->m_handler, (const struct sockaddr*) res_->ai_addr, 0);
-    
+    int r = uv_udp_bind(&cli->m_handler, (const struct sockaddr*) res_->ai_addr, 0);
+    (void)r;
+//    if(0 != r) MM_ERR("bind:%s", uv_strerror(r));
+
+
     free(resolver_);
     uv_freeaddrinfo(res_);
 }
 
-
-
 int br_udp_client_register(br_udp_client_t* cli_) {
     uv_udp_init(uv_default_loop(), &cli_->m_handler);
-    
+    int r;
+
     /* invalid ip, so we try a DNS resolution */
-    if (0 ==  br_isipv4(cli_->m_addr, strlen(cli_->m_addr))) {
-        uv_getaddrinfo_t* resolver = calloc(1, sizeof(uv_getaddrinfo_t));
+    if (0 == br_isipv4(cli_->m_addr, strlen(cli_->m_addr))) {
+        uv_getaddrinfo_t* resolver = calloc(1, sizeof (uv_getaddrinfo_t));
         struct addrinfo hints;
         hints.ai_family = PF_INET;
         hints.ai_socktype = SOCK_STREAM;
@@ -254,14 +254,22 @@ int br_udp_client_register(br_udp_client_t* cli_) {
         resolver->data = cli_;
 
         /* DNS resolution error */
-        if (0 > uv_getaddrinfo(uv_default_loop(),resolver,
-                on_resolved_udp_client, cli_->m_addr, NULL, &hints)){
-            MM_ERR("dns resolution failed for:%s", cli_->m_addr);
+        r = uv_getaddrinfo(uv_default_loop(), resolver,
+                on_resolved_udp_client, cli_->m_addr, NULL, &hints);
+        
+        if (0 != r) {
+            MM_ERR("dns resolution failed for:%s, %s", cli_->m_addr,uv_strerror(r));
             return -1;
         }
-        
+
     } else {
+//        r = uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
+//        if (0 != r) {
+//            MM_ERR("bind failed for:%s, %s", cli_->m_addr,uv_strerror(r));
+//            return -1;
+//        }
         uv_udp_bind(&cli_->m_handler, (const struct sockaddr*) (&cli_->m_socketaddr), 0);
+        
     }
     return 0;
 }
@@ -298,8 +306,13 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     udp_sentence.base = (char*) strdup(str_);
     udp_sentence.len = strlen(str_) + 1;
     send_req->data = udp_sentence.base; /* no memory leak */
-    uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1,
+
+    int r = uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1,
             (const struct sockaddr *) &cli_->m_socketaddr, on_udp_send);
+
+    if (0 != r) {
+        MM_ERR("udp send failed for:%s", cli_->m_addr, uv_strerror(r));
+    }
 }
 
 void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
@@ -386,9 +399,11 @@ static void on_http_connect(uv_stream_t* handle_, int status_) {
     cli->m_parser.data = cli;
     cli->m_handle.data = cli;
 
-    if (uv_accept(handle_, (uv_stream_t*) & cli->m_handle) == 0) {
+    int r = uv_accept(handle_, (uv_stream_t*) & cli->m_handle);
+    if (0 == r) {
         uv_read_start((uv_stream_t*) & cli->m_handle, on_alloc_buffer, on_http_read);
     } else {
+        MM_ERR("connect:%s", uv_strerror(r));
         uv_close((uv_handle_t*) & cli->m_handle, on_http_close);
     }
 }

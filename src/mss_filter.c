@@ -30,6 +30,8 @@ static mmpool_t* tcp_servers = NULL;
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
+    
+    
     return 0;
 }
 
