@@ -16,48 +16,6 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         MM_ERR("cannot run configuration file: %s",f_);
         return 1;
     }
-    /* ais_tcp_server */
-    {
-        lua_getglobal(L,"ais_tcp_server");
-        if (!lua_istable(L, -1)) {
-            MM_ERR("ais_tcp_server is not a table");
-            return -1;
-        }
-        lua_getfield(L, -1, "name");
-        if (!lua_isstring(L, -1)) {
-            MM_ERR("ais_tcp_server.name should be a string");
-            return -1;
-        }
-        const char* s = lua_tostring(L, -1);
-        cfg_->ais_tcp_server.name = strdup(s);
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "max_connections");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_tcp_server.max_connections should be a number");
-            return -1;
-        }
-        cfg_->ais_tcp_server.max_connections = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_tcp_server.port should be a number");
-            return -1;
-        }
-        cfg_->ais_tcp_server.port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-
-    }
-    /* admin_http_port */
-    {
-        lua_getglobal(L,"admin_http_port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("admin_http_port should be a number");
-            return -1;
-        }
-        cfg_->admin_http_port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        MM_INFO("admin_http_port=%d", cfg_->admin_http_port);
-    }
     /* geofilter */
     {
         lua_getglobal(L,"geofilter");
@@ -72,19 +30,19 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         }
         cfg_->geofilter.x1 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
-        lua_getfield(L, -1, "y2");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("geofilter.y2 should be a number");
-            return -1;
-        }
-        cfg_->geofilter.y2 = (double) lua_tonumber(L, -1);
-        lua_pop(L, 1);
         lua_getfield(L, -1, "x2");
         if (!lua_isnumber(L, -1)) {
             MM_ERR("geofilter.x2 should be a number");
             return -1;
         }
         cfg_->geofilter.x2 = (double) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, -1, "y2");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("geofilter.y2 should be a number");
+            return -1;
+        }
+        cfg_->geofilter.y2 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
         lua_getfield(L, -1, "y1");
         if (!lua_isnumber(L, -1)) {
@@ -94,6 +52,17 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         cfg_->geofilter.y1 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
 
+    }
+    /* admin_http_port */
+    {
+        lua_getglobal(L,"admin_http_port");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("admin_http_port should be a number");
+            return -1;
+        }
+        cfg_->admin_http_port = (int) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        MM_INFO("admin_http_port=%d", cfg_->admin_http_port);
     }
     /* ais_udp_in_port */
     {
@@ -105,6 +74,37 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
         lua_pop(L, 1);
         MM_INFO("ais_udp_in_port=%d", cfg_->ais_udp_in_port);
+    }
+    /* ais_tcp_server */
+    {
+        lua_getglobal(L,"ais_tcp_server");
+        if (!lua_istable(L, -1)) {
+            MM_ERR("ais_tcp_server is not a table");
+            return -1;
+        }
+        lua_getfield(L, -1, "port");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("ais_tcp_server.port should be a number");
+            return -1;
+        }
+        cfg_->ais_tcp_server.port = (int) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, -1, "max_connections");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("ais_tcp_server.max_connections should be a number");
+            return -1;
+        }
+        cfg_->ais_tcp_server.max_connections = (int) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, -1, "name");
+        if (!lua_isstring(L, -1)) {
+            MM_ERR("ais_tcp_server.name should be a string");
+            return -1;
+        }
+        const char* s = lua_tostring(L, -1);
+        cfg_->ais_tcp_server.name = strdup(s);
+        lua_pop(L, 1);
+
     }
     /* ais_out_udp */
     {

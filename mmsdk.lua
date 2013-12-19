@@ -186,7 +186,7 @@ extern "C" {
 ]])
 
     -- version info
-    local gendate=os.date("%Y-%m-%d_%Hh%m")
+    local gendate=os.date("%x %X")
     f_h:write("#define MM_VERSION_INFO \"v" ..  mmapi_m.version .. " ".. gendate .. "\"\n" );
 
     -- h config struct definition
