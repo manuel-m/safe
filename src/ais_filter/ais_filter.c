@@ -10,13 +10,13 @@
 #include "bagride.h"
 #include "mmtrace.h"
 
-#include "mss_filter_config.h"
+#include "ais_filter_config.h"
 
-#define HELP_USAGE "usage: mss_filter cfg_file" 
+#define HELP_USAGE "usage: ais_filter cfg_file" 
 
 static sad_filter_t filter;
 
-static struct mss_filter_config_s config;
+static struct ais_filter_config_s config;
 
 static char last_sentence[1024] = {0};
 static char forward_sentence[1024] = {0};
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
     MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
-    if (0 > mss_filter_config_load(&config,argv[1])) MM_GERR;
+    if (0 > ais_filter_config_load(&config,argv[1])) MM_GERR;
 
     MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", config.geofilter.x1, 
             config.geofilter.y1, config.geofilter.x2, config.geofilter.y2);
@@ -159,7 +159,7 @@ end:
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
         br_tcp_servers_close(tcp_servers);
-        mss_filter_config_close(&config);
+        ais_filter_config_close(&config);
     }    
 
 

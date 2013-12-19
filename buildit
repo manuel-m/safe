@@ -1,9 +1,17 @@
-MYEXE=./bin/mss_filter 
+#!/bin/bash
 
+
+OUTDIR=./bin
+PROJ=ais_filter 
 
 LIBUV_A=$(find ./libs -name libuv.a)
 LIBLUA_A=$(find ./libs -name liblua.a)
 
-if [ ! -d ./bin ]; then mkdir ./bin; fi 
-gcc -O3 -DNDEBUG -o ${MYEXE} -Isrc -Ilibs/lua-5.2.2/src -Ilibs/libuv/include $(ls src/*.c) ${LIBUV_A} ${LIBLUA_A} -lpthread -lrt -lm
-strip -s ${MYEXE}
+# ensure output is available
+if [ ! -d ${OUTDIR} ]; then mkdir ./bin; fi 
+
+
+gcc -O3 -DNDEBUG -o ${OUTDIR}/${PROJ} -Isrc/lib -Ilibs/lua-5.2.2/src -Ilibs/libuv/include \
+$(ls src/lib/*.c src/${PROJ}/*.c) \
+${LIBUV_A} ${LIBLUA_A} -lpthread -lrt -lm
+strip -s ${OUTDIR}/${PROJ}

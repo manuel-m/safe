@@ -2,8 +2,8 @@
 
 -- technical definition
 mmapi_m = {
-  basename = "mss_filter_config",
-  dirname = "src",
+  basename = "ais_filter_config",
+  dirname = "src/ais_filter",
   version = "0",
   define = "__MSS_FILTER_CONFIG"
 }
