@@ -42,11 +42,7 @@ static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t*
 }
 
 static int mmsi_cmp_cb(void* l_, void* r_) {
-    unsigned int l =  ((mmship_t*)l_)->mmsi;
-    unsigned int r =  (*(unsigned int*)r_);
-    
-    if (l != r)return 1;
-    return 0;
+    return (((mmship_t*)l_)->mmsi != (*(unsigned int*)r_)) ? 1 : 0;
 }
 
 static int on_ais_decoded(struct sad_filter_s * f_) {
@@ -86,9 +82,13 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     br_buf_t* buf = &server->m_write_buffer;
 
     if (0 == update) {
-        buf->len = asprintf(&buf->base, "new    ship:%d  (%d)\n", ais->mmsi,ship->nb_update);
+        buf->len = asprintf(&buf->base, "N %d\t(u:%d)[%d/%d]\n", ais->mmsi,ship->nb_update, 
+                live_ships->m_taken_len,
+                live_ships->m_alloc_len);
     } else {
-        buf->len = asprintf(&buf->base, "update ship:%d  (%d)\n", ais->mmsi,ship->nb_update);
+        buf->len = asprintf(&buf->base, "u %d\t(u:%d)[%d/%d]\n", ais->mmsi,ship->nb_update, 
+                live_ships->m_taken_len,
+                live_ships->m_alloc_len);
     }
 
     if (0 > buf->len) return -1;
