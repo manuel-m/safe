@@ -9,10 +9,18 @@ ais_udp_in_port = 9990
 
 -- ais_tcp_server
 ais_tcp_server = { 
-                     name            = "ais_in",
+                     name            = "ais_server",
                      port            = 9993,
                      max_connections = 32
 }
+
+-- ais_tcp_server
+ais_tcp_error = { 
+                     name            = "ais_server_error",
+                     port            = 9994,
+                     max_connections = 32
+}
+
 
 
 -- geographical filter
@@ -23,7 +31,7 @@ geofilter = {
                y2 = 36.0 
             }
 
---  ais out put is not mandatory
+--  ais output is not mandatory
  ais_out_udp = {  
                  "192.168.200.13:9993",
                  "l18:9993",

@@ -1616,13 +1616,9 @@ void json_aivdm_dump(const struct ais_t *ais,
 /* entry points begin here */
 
 
-#define SADERR(NAME) static const char* NAME=#NAME
 
-SADERR(SENTENCE_TOO_BIG);
-SADERR(NO_AIVDM);
-SADERR(BAD_CRC);
-SADERR(OVERLONG_AIVDM_PAYLOAD);
-SADERR(MESSAGE_TYPE_0);
+
+
 
 
 #ifdef SAD_STRICT_DECODE
@@ -1638,14 +1634,35 @@ SADERR(MESSAGE6_PAYLOAD_NOT88_1008);
 SADERR(MESSAGE9_PAYLOAD_NOT168);
 #endif
 
-int sad_filter_init(sad_filter_t* f_, int (*f_ais_cb_)(struct sad_filter_s*), void* userdata_) {
+int sad_filter_init(sad_filter_t* f_, int (*f_ais_cb_)(struct sad_filter_s*), 
+                    void* userdata_, void (*f_error_cb)(const char*)) {
     if (NULL == f_ || NULL == f_ais_cb_) return 1;
     memset(f_, 0, sizeof (sad_filter_t));
     f_->f_ais_cb = f_ais_cb_;
+    f_->f_error_cb = f_error_cb;
     f_->userdata = userdata_;
     return 0;
 }
 
+#define SADERRM(FMTERRM) \
+  do {                                                                        \
+    int iii;                                                                  \
+    char bufss[1024];                                                         \
+    iii = snprintf(bufss,sentence->n,"%s", sentence->start);                  \
+    iii = asprintf(&mmerr,                                                    \
+                   #FMTERRM "{%s:%d:%d}%s:%d\n",                              \
+                   bufss,                                                     \
+                   (int)sentence->n,                                          \
+                   (int)sentence->start[0],                                   \
+                   __FILE__,                                                  \
+                   __LINE__ );                                                \
+    (void)iii;                                                                \
+    goto endline;                                                             \
+  }                                                                           \
+  while (0)
+
+    
+    
 int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) {
 
     sub0_line_t sentences;
@@ -1653,14 +1670,11 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
     sub0_line_prepare(buffer_, n_, '\n', &sentences);
 
     while (NULL != (sentence = sub0_line_next_substring(&sentences))) {
-        const char* mmerr = NULL;
-        if (0 == sentence->n) continue;
+        char* mmerr = NULL;
+        
+        /* level 1: incoherent size ... garbage */
+        if (NMEA_MIN > sentence->n || NMEA_MAX < sentence->n) continue;
         ++filter_->sentences;
-
-        if (NMEA_MAX < sentence->n) {
-            mmerr = SENTENCE_TOO_BIG;
-            goto endline;
-        }
 
         /* level 2: strip pre-garbage char */
         size_t s2_n = sentence->n;
@@ -1674,8 +1688,8 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 
         /* we should have found ! here*/
         if (s2_p == sentence->end || s2_n < 16) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
@@ -1695,63 +1709,53 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                 crc ^= *c;
                 --count_check_sum;
                 if (2 > count_check_sum) {
-                    mmerr = BAD_CRC;
-                    goto endline;
+                    SADERRM(BAD_CRC);
                 }
                 ++c;
             }
 #ifdef SAD_STRICT_DECODE                    
             if (6 != nb_comas) {
-                mmerr = MISSING_FIELD;
-                goto endline;
+                SADERRM(MISSING_FIELD);
             }
 #endif            
             (void) snprintf(csum, sizeof (csum), "%02X", crc);
             ++c;
             if (csum[0] != toupper(*c)) {
-                mmerr = BAD_CRC;
-                goto endline;
+                SADERRM(BAD_CRC);
             };
             ++c;
             if (csum[1] != toupper(*c)) {
-                mmerr = BAD_CRC;
-                goto endline;
+                SADERRM(BAD_CRC);
             };
         }
         /* FIELD 1 check AIVDM, */
         if ('A' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
         if ('I' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
         if ('V' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
         if ('D' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
         if ('M' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
         if (',' != *s2_p) {
-            mmerr = NO_AIVDM;
-            goto endline;
+            SADERRM(NO_AIVDM);
         }
         ++s2_p;
         --s2_n;
@@ -1817,8 +1821,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                     }
                     ais_context.bitlen++;
                     if (ais_context.bitlen > sizeof (ais_context.bits)) {
-                        mmerr = OVERLONG_AIVDM_PAYLOAD;
-                        goto endline;
+                        SADERRM(OVERLONG_AIVDM_PAYLOAD);
                     }
                 }
             }
@@ -1838,8 +1841,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                 ais->type = MMUBITS(0, 6);
 
                 if (0 == ais->type || ais->type > AIVDM_MESSAGES_TYPE) {
-                    mmerr = MESSAGE_TYPE_0;
-                    goto endline;
+                    SADERRM(MESSAGE_TYPE_0);
                 }
                 /* ais type */
                 ais->repeat = MMUBITS(6, 2);
@@ -1893,8 +1895,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                     case 5: /* Ship static and voyage related data */
 #ifdef SAD_STRICT_DECODE              
                         if (ais_context.bitlen != 424) {
-                            mmerr = MESSAGE5_PAYLOAD_NOT424;
-                            goto endline;
+                            SADERRM(MESSAGE5_PAYLOAD_NOT424);
                         }
 #endif            
                         ais->type5.ais_version = MMUBITS(38, 2);
@@ -1954,8 +1955,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 
 #ifdef SAD_STRICT_DECODE              
                         if (ais_context.bitlen != 168) {
-                            mmerr = MESSAGE18_PAYLOAD_NOT168;
-                            goto endline;
+                            SADERRM(MESSAGE18_PAYLOAD_NOT168);
                         }
 #endif             
                         ais->type18.reserved = MMUBITS(38, 8);
@@ -1986,8 +1986,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                     case 19: /* Extended Class B CS Position Report */
 #ifdef SAD_STRICT_DECODE              
                         if (ais_context.bitlen != 312) {
-                            mmerr = MESSAGE19_PAYLOAD_NOT312;
-                            goto endline;
+                            SADERRM(MESSAGE19_PAYLOAD_NOT312);
                         }
 #endif             
                         ais->type19.reserved = MMUBITS(38, 8);
@@ -2021,8 +2020,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                     case 9: /* Standard SAR Aircraft Position Report */
 #ifdef SAD_STRICT_DECODE              
                         if (ais_context.bitlen != 168) {
-                            mmerr = MESSAGE9_PAYLOAD_NOT168;
-                            goto endline;
+                            SADERRM(MESSAGE9_PAYLOAD_NOT168);
                         }
 #endif                 
                         ais->type9.alt = MMUBITS(38, 12);
@@ -2050,7 +2048,12 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 endline:
         if (mmerr) {
             ++filter_->errors;
+            
+            if(filter_->f_error_cb) filter_->f_error_cb(mmerr);
+            free(mmerr);
+            
         } else {
+          
             
             /* drop duplicates */
             if (0 == strncmp(filter_->last_sentence, sentence->start, sentence->n)) {

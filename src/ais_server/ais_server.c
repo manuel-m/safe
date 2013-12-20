@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
+    if (sad_filter_init(&filter, on_ais_decoded, NULL,NULL)) MM_GERR;
 
     /* udp servers  */
     {

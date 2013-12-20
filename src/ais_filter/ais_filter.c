@@ -14,9 +14,12 @@
 
 #define HELP_USAGE "usage: ais_filter cfg_file" 
 
+#define AIS_SRV       0
+#define AIS_SRV_ERROR 1
+
 static sad_filter_t filter;
 
-static struct ais_filter_config_s config;
+static struct ais_filter_config_s conf;
 
 static mmpool_t* udp_clients = NULL;
 
@@ -24,6 +27,10 @@ static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
 
+
+static void user_info_dump(void) {
+    printf(HELP_USAGE "\n");
+}
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
@@ -46,8 +53,8 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
     const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 
-    if (lon > config.geofilter.x1 && lon < config.geofilter.x2
-            && lat < config.geofilter.y1 && lat > config.geofilter.y2) {
+    if (lon > conf.geofilter.x1 && lon < conf.geofilter.x2
+            && lat < conf.geofilter.y1 && lat > conf.geofilter.y2) {
 
         strncpy(f_->forward_sentence, sentence->start, sentence->n);
         f_->forward_sentence[sentence->n] = '\n';
@@ -58,77 +65,87 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
                 f_->sentences, ais->type, ais->mmsi, lat, lon, forward_sentence);
 #endif /* MM_ULTRADEBUG */
 
-        if (0 < config.ais_out_udp.n) {
+        if (0 < conf.ais_out_udp.n) {
             br_udp_clients_send(udp_clients, f_->forward_sentence);
         }
 
-        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[0]->m_p),
+        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[AIS_SRV]->m_p),
                 f_->forward_sentence, sentence->n + 1);
     }
     return 0;
 }
 
 static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t* pserver_) {
-    MM_INFO("tcp (%d)[%d] %s data (%p)", pserver_->m_port, (int) nread_, inbuf_->base,
+    MM_INFO("tcp (%d)[%d] %s data (%p)\n", pserver_->m_port, (int) nread_, inbuf_->base,
             pserver_->m_data);
     if (0 > asprintf(&pserver_->m_write_buffer.base, "<<%s>>", inbuf_->base)) return -1;
     pserver_->m_write_buffer.len = strlen(pserver_->m_write_buffer.base);
     return 0;
 }
 
-static void mss_info_error(void) {
-    printf(HELP_USAGE "\n");
+
+
+static void ais_decode_error(const char* errm_){
+  br_tcp_server_t* server = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR]->m_p);
+  br_tcp_write_string(server, errm_, strlen(errm_));
 }
 
 int main(int argc, char **argv) {
     int r = 0;
     
-#define MM_GERR { r=-1;mss_info_error();goto end;}
+#define MM_GERR { r=-1;user_info_dump();goto end;}
 
     if (2 > argc) MM_GERR;
 
     MM_INFO("version=\"%s\"", MM_VERSION_INFO );
     MM_INFO("exe=\"%s\"", argv[0]);
-    MM_INFO("config=\"%s\"", argv[1]);
-    if (0 > ais_filter_config_load(&config,argv[1])) MM_GERR;
+    MM_INFO("conf=\"%s\"", argv[1]);
+    if (0 > ais_filter_config_load(&conf,argv[1])) MM_GERR;
 
-    MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", config.geofilter.x1, 
-            config.geofilter.y1, config.geofilter.x2, config.geofilter.y2);
+    MM_INFO("geofilter={x1=%f,y1=%f,x2=%f,y2=%f}", conf.geofilter.x1, 
+            conf.geofilter.y1, conf.geofilter.x2, conf.geofilter.y2);
     
     /* udp client init */
-    if(0 < config.ais_out_udp.n)
+    if(0 < conf.ais_out_udp.n)
     {
-        if (NULL == (udp_clients = mmpool_new(config.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
+        if (NULL == (udp_clients = mmpool_new(conf.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
         int idx;
-        for(idx=0;idx<config.ais_out_udp.n;idx++){
-          const char* s = config.ais_out_udp.items[idx];
+        for(idx=0;idx<conf.ais_out_udp.n;idx++){
+          const char* s = conf.ais_out_udp.items[idx];
             if (0 > br_udp_client_add(udp_clients, s)) MM_GERR;
             MM_INFO("ais_out_udp[%d]=\"%s\"", (idx+1),s);
         }
     }
         
-    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
+    if (sad_filter_init(&filter, on_ais_decoded, NULL,ais_decode_error)) MM_GERR;
 
     /* udp servers  */
     {
         if (NULL == (udp_servers = mmpool_new(1, sizeof(br_udp_server_t), NULL))) return -1;
-        br_udp_server_add(udp_servers, config.ais_udp_in_port, on_udp_parse);
+        br_udp_server_add(udp_servers, conf.ais_udp_in_port, on_udp_parse);
     }       
     
     /* http servers  */
     {
         if (NULL == (http_servers = mmpool_new(1, sizeof(br_http_server_t), NULL))) return -1;
-        br_http_server_add(http_servers, config.admin_http_port, on_stats_response);
+        br_http_server_add(http_servers, conf.admin_http_port, on_stats_response);
     }
     
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_new(1, sizeof(br_tcp_server_t), NULL))) return -1;
+        if (NULL == (tcp_servers = mmpool_new(2, sizeof(br_tcp_server_t), NULL))) return -1;
         br_tcp_server_add(tcp_servers,
-                          config.ais_tcp_server.name, 
-                          config.ais_tcp_server.port, 
+                          conf.ais_tcp_server.name, 
+                          conf.ais_tcp_server.port, 
                           on_tcp_parse,
-                          config.ais_tcp_server.max_connections);
+                          conf.ais_tcp_server.max_connections);
+        
+        br_tcp_server_add(tcp_servers,
+                          conf.ais_tcp_error.name, 
+                          conf.ais_tcp_error.port, 
+                          on_tcp_parse,
+                          conf.ais_tcp_error.max_connections);        
+        
     }    
     br_run();
 
@@ -142,7 +159,7 @@ end:
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
         br_tcp_servers_close(tcp_servers);
-        ais_filter_config_close(&config);
+        ais_filter_config_close(&conf);
     }    
 
 

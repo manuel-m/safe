@@ -18,6 +18,12 @@ mmapi = {
                              port             = "int",
                              max_connections  = "int"
          },
+         ais_tcp_error = {
+                             name             = "char*",
+                             port             = "int",
+                             max_connections  = "int"
+         },
+             
 	 geofilter = { 
 	               x1 = "double",
 	               y1 = "double",

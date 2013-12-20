@@ -104,6 +104,7 @@ extern "C" {
      * The current hog champion is the Trimble BX-960 receiver, which
      * emits a 91-character GGA message.
      */
+#define NMEA_MIN        23              /* observed value */    
 #define NMEA_MAX	91		/* max length of NMEA sentence */
 #define NMEA_BIG_BUF	(2*NMEA_MAX+1)	/* longer than longest NMEA sentence */
 
@@ -1259,6 +1260,7 @@ extern "C" {
     typedef struct sad_filter_s {
         struct ais_t ais;
         int (*f_ais_cb)(struct sad_filter_s*);
+        void (*f_error_cb)(const char*);
         void* userdata;
         sub0_substring_t* sentence;
         uint8_t state;
@@ -1274,7 +1276,8 @@ extern "C" {
 
     } sad_filter_t;
 
-    int sad_filter_init(sad_filter_t* f_, int (*f_ais_cb)(struct sad_filter_s*), void* userdata_);
+    int sad_filter_init(sad_filter_t*, int (*f_ais_cb)(struct sad_filter_s*), 
+                        void*, void (*f_error_cb)(const char*) );
 
     int sad_stats_string(char **, sad_filter_t*);
     int sad_decode_file(sad_filter_t* filter_, const char* filename_);
