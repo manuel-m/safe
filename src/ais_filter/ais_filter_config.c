@@ -58,6 +58,17 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         lua_pop(L, 1);
 
     }
+    /* ais_udp_in_port */
+    {
+        lua_getglobal(L,"ais_udp_in_port");
+        if (!lua_isnumber(L, -1)) {
+            MM_ERR("ais_udp_in_port should be a number");
+            return -1;
+        }
+        cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        MM_INFO("ais_udp_in_port=%d", cfg_->ais_udp_in_port);
+    }
     /* geofilter */
     {
         lua_getglobal(L,"geofilter");
@@ -94,17 +105,6 @@ int ais_filter_config_load(struct ais_filter_config_s* cfg_,const char* f_)
         cfg_->geofilter.y2 = (double) lua_tonumber(L, -1);
         lua_pop(L, 1);
 
-    }
-    /* ais_udp_in_port */
-    {
-        lua_getglobal(L,"ais_udp_in_port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_udp_in_port should be a number");
-            return -1;
-        }
-        cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        MM_INFO("ais_udp_in_port=%d", cfg_->ais_udp_in_port);
     }
     /* ais_out_udp */
     {

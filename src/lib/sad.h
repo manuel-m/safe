@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+
 // #define SAD_ENABLE_ALL 1
 
 #ifdef SAD_ENABLE_ALL
@@ -1266,6 +1267,7 @@ extern "C" {
         uint64_t sentences;
         uint64_t frags;
         uint64_t errors;
+        uint64_t duplicates;
         uint64_t types[AIVDM_MESSAGES_TYPE + 1];
         char last_sentence[1024];
         char forward_sentence[1024];

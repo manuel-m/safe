@@ -43,20 +43,6 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
     if (3 < ais->type ) return 0;
 
-    if (0 == strncmp(f_->last_sentence, sentence->start, sentence->n)) {
-        /* drop duplicate */
-#ifndef NDEBUG            
-        MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
-                f_->sentences,
-                ais->type,
-                ais->mmsi,
-                f_->sentence->start);
-#endif            
-        return 0;
-    }
-    strncpy(f_->last_sentence, sentence->start, sentence->n);
-    f_->last_sentence[sentence->n + 1] = '0';
-
     const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
     const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 

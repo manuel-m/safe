@@ -362,61 +362,9 @@ void json_aivdm_dump(const struct ais_t *ais,
 #define SHIPTYPE_DISPLAY(n) (((n) < (unsigned int)NITEMS(ship_type_legends)) ? ship_type_legends[n] : "INVALID SHIP TYPE")
 #endif /* SAD_ENABLE_MESSAGE_5_OR_19 */
     
-    //    static const char *station_type_legends[] = {
-    //        "All types of mobiles",
-    //        "Reserved for future use",
-    //        "All types of Class B mobile stations",
-    //        "SAR airborne mobile station",
-    //        "Aid to Navigation station",
-    //        "Class B shipborne mobile station",
-    //        "Regional use and inland waterways",
-    //        "Regional use and inland waterways",
-    //        "Regional use and inland waterways",
-    //        "Regional use and inland waterways",
-    //        "Reserved for future use",
-    //        "Reserved for future use",
-    //        "Reserved for future use",
-    //        "Reserved for future use",
-    //        "Reserved for future use",
-    //        "Reserved for future use",
-    //    };
 
 #define STATIONTYPE_DISPLAY(n) (((n) < (unsigned int)NITEMS(station_type_legends)) ? station_type_legends[n] : "INVALID STATION TYPE")
 
-    //    static const char *navaid_type_legends[] = {
-    //        "Unspecified",
-    //        "Reference point",
-    //        "RACON",
-    //        "Fixed offshore structure",
-    //        "Spare, Reserved for future use.",
-    //        "Light, without sectors",
-    //        "Light, with sectors",
-    //        "Leading Light Front",
-    //        "Leading Light Rear",
-    //        "Beacon, Cardinal N",
-    //        "Beacon, Cardinal E",
-    //        "Beacon, Cardinal S",
-    //        "Beacon, Cardinal W",
-    //        "Beacon, Port hand",
-    //        "Beacon, Starboard hand",
-    //        "Beacon, Preferred Channel port hand",
-    //        "Beacon, Preferred Channel starboard hand",
-    //        "Beacon, Isolated danger",
-    //        "Beacon, Safe water",
-    //        "Beacon, Special mark",
-    //        "Cardinal Mark N",
-    //        "Cardinal Mark E",
-    //        "Cardinal Mark S",
-    //        "Cardinal Mark W",
-    //        "Port hand Mark",
-    //        "Starboard hand Mark",
-    //        "Preferred Channel Port hand",
-    //        "Preferred Channel Starboard hand",
-    //        "Isolated danger",
-    //        "Safe Water",
-    //        "Special Mark",
-    //        "Light Vessel / LANBY / Rigs",
-    //    };
 
 #define NAVAIDTYPE_DISPLAY(n) (((n) < (unsigned int)NITEMS(navaid_type_legends[0])) ? navaid_type_legends[n] : "INVALID NAVAID TYPE")
 
@@ -1905,6 +1853,8 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
                 }
 #endif                
 
+                
+
                 switch (ais->type) {
 
                         /**
@@ -2093,18 +2043,26 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 
                 }
                 ++(filter_->types[ais->type - 1]);
+                
             }
         }
 
 endline:
         if (mmerr) {
             ++filter_->errors;
-            //#ifndef NDEBUG        
-            //            printf("[KO] %" PRIu64 " %s, %s", filter_->sentences,  mmerr, sentence->start);
-            //#endif            
         } else {
-            filter_->sentence = sentence;
-            filter_->f_ais_cb(filter_);
+            
+            /* drop duplicates */
+            if (0 == strncmp(filter_->last_sentence, sentence->start, sentence->n)) {
+              ++filter_->duplicates;
+              
+            }else
+            {
+                strncpy(filter_->last_sentence, sentence->start, sentence->n);
+                filter_->last_sentence[sentence->n + 1] = '0';
+                filter_->sentence = sentence;
+                filter_->f_ais_cb(filter_);
+            }
         }
 
     }
@@ -2125,36 +2083,37 @@ int sad_decode_file(sad_filter_t* filter_, const char* filename_) {
 }
 
 #define MF_FMT0 \
-        "messages :%" PRIu64 "\n" \
-        "frags    :%" PRIu64 "\n" \
-        "errors   :%" PRIu64 "\n" \
-        "type  1  :%" PRIu64 "\n" \
-        "type  2  :%" PRIu64 "\n" \
-        "type  3  :%" PRIu64 "\n" \
-        "type  4  :%" PRIu64 "\n" \
-        "type  5  :%" PRIu64 "\n" \
-        "type  6  :%" PRIu64 "\n" \
-        "type  7  :%" PRIu64 "\n" \
-        "type  8  :%" PRIu64 "\n" \
-        "type  9  :%" PRIu64 "\n" \
-        "type 10  :%" PRIu64 "\n" \
-        "type 11  :%" PRIu64 "\n" \
-        "type 12  :%" PRIu64 "\n" \
-        "type 13  :%" PRIu64 "\n" \
-        "type 14  :%" PRIu64 "\n" \
-        "type 15  :%" PRIu64 "\n" \
-        "type 16  :%" PRIu64 "\n" \
-        "type 17  :%" PRIu64 "\n" \
-        "type 18  :%" PRIu64 "\n" \
-        "type 19  :%" PRIu64 "\n" \
-        "type 20  :%" PRIu64 "\n" \
-        "type 21  :%" PRIu64 "\n" \
-        "type 22  :%" PRIu64 "\n" \
-        "type 23  :%" PRIu64 "\n" \
-        "type 24  :%" PRIu64 "\n" \
-        "type 25  :%" PRIu64 "\n" \
-        "type 26  :%" PRIu64 "\n" \
-        "type 27  :%" PRIu64 "\n" 
+        "messages :  %" PRIu64 "\n" \
+        "frags    :  %" PRIu64 "\n" \
+        "errors    : %" PRIu64 "\n" \
+        "duplicates: %" PRIu64 "\n" \
+        "type  1  :  %" PRIu64 "\n" \
+        "type  2  :  %" PRIu64 "\n" \
+        "type  3  :  %" PRIu64 "\n" \
+        "type  4  :  %" PRIu64 "\n" \
+        "type  5  :  %" PRIu64 "\n" \
+        "type  6  :  %" PRIu64 "\n" \
+        "type  7  :  %" PRIu64 "\n" \
+        "type  8  :  %" PRIu64 "\n" \
+        "type  9  :  %" PRIu64 "\n" \
+        "type 10  :  %" PRIu64 "\n" \
+        "type 11  :  %" PRIu64 "\n" \
+        "type 12  :  %" PRIu64 "\n" \
+        "type 13  :  %" PRIu64 "\n" \
+        "type 14  :  %" PRIu64 "\n" \
+        "type 15  :  %" PRIu64 "\n" \
+        "type 16  :  %" PRIu64 "\n" \
+        "type 17  :  %" PRIu64 "\n" \
+        "type 18  :  %" PRIu64 "\n" \
+        "type 19  :  %" PRIu64 "\n" \
+        "type 20  :  %" PRIu64 "\n" \
+        "type 21  :  %" PRIu64 "\n" \
+        "type 22  :  %" PRIu64 "\n" \
+        "type 23  :  %" PRIu64 "\n" \
+        "type 24  :  %" PRIu64 "\n" \
+        "type 25  :  %" PRIu64 "\n" \
+        "type 26  :  %" PRIu64 "\n" \
+        "type 27  :  %" PRIu64 "\n" 
 
 int sad_stats_string(char ** response_string, sad_filter_t* filter) {
 
@@ -2163,6 +2122,7 @@ int sad_stats_string(char ** response_string, sad_filter_t* filter) {
             filter->sentences,
             filter->frags,
             filter->errors,
+            filter->duplicates,
             MF_FILTER(0), MF_FILTER(1), MF_FILTER(2), MF_FILTER(3),
             MF_FILTER(4), MF_FILTER(5), MF_FILTER(6), MF_FILTER(7),
             MF_FILTER(8), MF_FILTER(9),

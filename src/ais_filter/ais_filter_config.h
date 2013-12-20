@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define MM_VERSION_INFO "v0.1 12/20/13 02:48:46"
+#define MM_VERSION_INFO "v0.1 12/20/13 11:12:57"
 struct ais_filter_config_s{
     int admin_http_port;
     struct {
@@ -13,13 +13,13 @@ struct ais_filter_config_s{
          int max_connections;
          int port;
     } ais_tcp_server;
+    int ais_udp_in_port;
     struct {
          double x2;
          double y1;
          double x1;
          double y2;
     } geofilter;
-    int ais_udp_in_port;
     struct {
      int n;
      char** items ;
