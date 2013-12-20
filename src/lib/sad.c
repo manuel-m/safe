@@ -2086,37 +2086,37 @@ int sad_decode_file(sad_filter_t* filter_, const char* filename_) {
 }
 
 #define MF_FMT0 \
-        "messages :  %" PRIu64 "\n" \
-        "frags    :  %" PRIu64 "\n" \
-        "errors    : %" PRIu64 "\n" \
-        "duplicates: %" PRIu64 "\n" \
-        "type  1  :  %" PRIu64 "\n" \
-        "type  2  :  %" PRIu64 "\n" \
-        "type  3  :  %" PRIu64 "\n" \
-        "type  4  :  %" PRIu64 "\n" \
-        "type  5  :  %" PRIu64 "\n" \
-        "type  6  :  %" PRIu64 "\n" \
-        "type  7  :  %" PRIu64 "\n" \
-        "type  8  :  %" PRIu64 "\n" \
-        "type  9  :  %" PRIu64 "\n" \
-        "type 10  :  %" PRIu64 "\n" \
-        "type 11  :  %" PRIu64 "\n" \
-        "type 12  :  %" PRIu64 "\n" \
-        "type 13  :  %" PRIu64 "\n" \
-        "type 14  :  %" PRIu64 "\n" \
-        "type 15  :  %" PRIu64 "\n" \
-        "type 16  :  %" PRIu64 "\n" \
-        "type 17  :  %" PRIu64 "\n" \
-        "type 18  :  %" PRIu64 "\n" \
-        "type 19  :  %" PRIu64 "\n" \
-        "type 20  :  %" PRIu64 "\n" \
-        "type 21  :  %" PRIu64 "\n" \
-        "type 22  :  %" PRIu64 "\n" \
-        "type 23  :  %" PRIu64 "\n" \
-        "type 24  :  %" PRIu64 "\n" \
-        "type 25  :  %" PRIu64 "\n" \
-        "type 26  :  %" PRIu64 "\n" \
-        "type 27  :  %" PRIu64 "\n" 
+        "messages  :  %" PRIu64 "\n" \
+        "frags     :  %" PRIu64 "\n" \
+        "errors    :  %" PRIu64 "\n" \
+        "duplicates:  %" PRIu64 "\n" \
+        "type  1   :  %" PRIu64 "\n" \
+        "type  2   :  %" PRIu64 "\n" \
+        "type  3   :  %" PRIu64 "\n" \
+        "type  4   :  %" PRIu64 "\n" \
+        "type  5   :  %" PRIu64 "\n" \
+        "type  6   :  %" PRIu64 "\n" \
+        "type  7   :  %" PRIu64 "\n" \
+        "type  8   :  %" PRIu64 "\n" \
+        "type  9   :  %" PRIu64 "\n" \
+        "type 10   :  %" PRIu64 "\n" \
+        "type 11   :  %" PRIu64 "\n" \
+        "type 12   :  %" PRIu64 "\n" \
+        "type 13   :  %" PRIu64 "\n" \
+        "type 14   :  %" PRIu64 "\n" \
+        "type 15   :  %" PRIu64 "\n" \
+        "type 16   :  %" PRIu64 "\n" \
+        "type 17   :  %" PRIu64 "\n" \
+        "type 18   :  %" PRIu64 "\n" \
+        "type 19   :  %" PRIu64 "\n" \
+        "type 20   :  %" PRIu64 "\n" \
+        "type 21   :  %" PRIu64 "\n" \
+        "type 22   :  %" PRIu64 "\n" \
+        "type 23   :  %" PRIu64 "\n" \
+        "type 24   :  %" PRIu64 "\n" \
+        "type 25   :  %" PRIu64 "\n" \
+        "type 26   :  %" PRIu64 "\n" \
+        "type 27   :  %" PRIu64 "\n" 
 
 int sad_stats_string(char ** response_string, sad_filter_t* filter) {
 
