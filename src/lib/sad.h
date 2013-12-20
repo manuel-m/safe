@@ -206,16 +206,9 @@ extern "C" {
 
 
 #define AIVDM_CHANNELS	2		/* A, B */
-
-    struct ais_t {
-        unsigned int type; /* message type */
-        unsigned int repeat; /* Repeat indicator */
-        unsigned int mmsi; /* MMSI */
-
-        union {
-
-            /* Types 1-3 Common navigation info */
-            struct {
+    
+           
+        typedef struct type123_s {
                 unsigned int status; /* navigation status */
                 signed turn; /* rate of turn */
 #define AIS_TURN_HARD_LEFT	-127
@@ -242,7 +235,17 @@ extern "C" {
                 unsigned int maneuver; /* maneuver indicator */
                 bool raim; /* RAIM flag */
                 unsigned int radio; /* radio status bits */
-            } type1;
+            } type123_t;    
+
+    struct ais_t {
+        unsigned int type; /* message type */
+        unsigned int repeat; /* Repeat indicator */
+        unsigned int mmsi; /* MMSI */
+
+        union {
+
+            /* Types 1-3 Common navigation info */
+            type123_t type1;
 
             /* Type 4 - Base Station Report & Type 11 - UTC and Date Response */
             struct {
@@ -1264,6 +1267,9 @@ extern "C" {
         uint64_t frags;
         uint64_t errors;
         uint64_t types[AIVDM_MESSAGES_TYPE + 1];
+        char last_sentence[1024];
+        char forward_sentence[1024];
+
     } sad_filter_t;
 
     int sad_filter_init(sad_filter_t* f_, int (*f_ais_cb)(struct sad_filter_s*), void* userdata_);

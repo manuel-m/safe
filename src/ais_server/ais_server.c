@@ -14,70 +14,88 @@
 
 #define HELP_USAGE "usage: ais_server cfg_file" 
 
-static sad_filter_t server;
+static sad_filter_t filter;
 
 static struct ais_server_config_s config;
 
-static char last_sentence[1024] = {0};
-static char forward_sentence[1024] = {0};
+typedef struct mmship_s {
+    unsigned int mmsi;
+    unsigned int nb_update;
+    type123_t ais;
+} mmship_t;
+
+static mmpool_t* live_ships = NULL;
 
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
 
-
 static int on_stats_response(br_http_client_t* cli_) {
-    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &server);
+    cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
     return 0;
 }
 
 static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
     (void) pserver_;
-    sad_decode_multiline(&server, inbuf_->base, nread_);
+    sad_decode_multiline(&filter, inbuf_->base, nread_);
     return 0;
 }
 
-static int on_ais_decoded(struct sad_filter_s * server_) {
+static int mmsi_cmp_cb(void* l_, void* r_) {
+    unsigned int l =  ((mmship_t*)l_)->mmsi;
+    unsigned int r =  (*(unsigned int*)r_);
+    
+    if (l != r)return 1;
+    return 0;
+}
 
-    struct ais_t * ais = &server_->ais;
-    sub0_substring_t* sentence = server_->sentence;
+static int on_ais_decoded(struct sad_filter_s * f_) {
+    struct ais_t * ais = &f_->ais;
+    int update = 0;
 
-    if (1 == ais->type || 2 == ais->type || 3 == ais->type) {
+    if (3 < ais->type) return 0;
 
-        if (0 == strncmp(last_sentence, sentence->start, sentence->n)) {
-            /* drop duplicate */
-#ifndef NDEBUG            
-            MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
-                    server_->sentences,
-                    ais->type,
-                    ais->mmsi,
-                    server_->sentence->start);
-#endif            
-            return 0;
-        }
-        strncpy(last_sentence, sentence->start, sentence->n);
-        last_sentence[sentence->n + 1] = '0';
+    mmpool_finder_t finder = {
+        .m_index = 0,
+        .m_pool = live_ships,
+        .m_cmp_cb = mmsi_cmp_cb
+    };
 
-        const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
-        const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
+    mmship_t* ship = (mmship_t*) mmpool_find(&finder, (void*) (&ais->mmsi));
 
-        if (lon > config.geoserver.x1 && lon < config.geoserver.x2 
-          && lat < config.geoserver.y1 && lat > config.geoserver.y2) {
-
-            strncpy(forward_sentence, sentence->start, sentence->n);
-            forward_sentence[sentence->n] = '\n';
-            forward_sentence[sentence->n + 1] = '\0';
-
-#ifdef MM_ULTRADEBUG
-            MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
-                    server_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
-#endif /* MM_ULTRADEBUG */
-
-            
-            br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
-                    forward_sentence, sentence->n + 1);
-        }
+    /* !found */
+    if (NULL == ship) {
+        mmpool_item_t* item = mmpool_take(live_ships);
+        if (item) {
+            ship = (mmship_t*) item->m_p;
+            ship->mmsi = ais->mmsi; 
+       }
+    } else {
+        update = 1;
+        ++(ship->nb_update);
     }
+
+    if (ship) {
+        memcpy(&ship->ais, &(ais->type1), sizeof (type123_t));
+    } else {
+        MM_ERR("live ships buffer  overflow ...");
+        return -1;
+    }
+
+    br_tcp_server_t* server = (br_tcp_server_t*) tcp_servers->items[0]->m_p;
+    br_buf_t* buf = &server->m_write_buffer;
+
+    if (0 == update) {
+        buf->len = asprintf(&buf->base, "new    ship:%d  (%d)\n", ais->mmsi,ship->nb_update);
+    } else {
+        buf->len = asprintf(&buf->base, "update ship:%d  (%d)\n", ais->mmsi,ship->nb_update);
+    }
+
+    if (0 > buf->len) return -1;
+
+    br_tcp_write_string(server, buf->base, buf->len);
+
+
     return 0;
 }
 
@@ -89,61 +107,66 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
     return 0;
 }
 
-static void mss_info_error(void) {
+static void ais_info_error(void) {
     printf(HELP_USAGE "\n");
 }
 
 int main(int argc, char **argv) {
     int r = 0;
-    
-#define MM_GERR { r=-1;mss_info_error();goto end;}
+
+#define MM_GERR { r=-1;ais_info_error();goto end;}
 
     if (2 > argc) MM_GERR;
 
-    MM_INFO("version=\"%s\"", MM_VERSION_INFO );
+    MM_INFO("version=\"%s\"", MM_VERSION_INFO);
     MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("config=\"%s\"", argv[1]);
-    if (0 > ais_server_config_load(&config,argv[1])) MM_GERR;
 
-    MM_INFO("geoserver={x1=%f,y1=%f,x2=%f,y2=%f}", config.geoserver.x1, 
-            config.geoserver.y1, config.geoserver.x2, config.geoserver.y2);
-        
-    if (sad_filter_init(&server, on_ais_decoded, NULL)) MM_GERR;
+    if (0 > ais_server_config_load(&config, argv[1])) MM_GERR;
+
+    /* live ships buffer init */
+    {
+        if (NULL == (live_ships = mmpool_new(config.max_ships, sizeof (mmship_t), NULL))) {
+            MM_ERR("too many requested ships: %d", config.max_ships);
+            return -1;
+        }
+    }
+
+    if (sad_filter_init(&filter, on_ais_decoded, NULL)) MM_GERR;
 
     /* udp servers  */
     {
-        if (NULL == (udp_servers = mmpool_new(1, sizeof(br_udp_server_t), NULL))) return -1;
+        if (NULL == (udp_servers = mmpool_new(1, sizeof (br_udp_server_t), NULL))) return -1;
         br_udp_server_add(udp_servers, config.ais_udp_in_port, on_udp_parse);
-    }       
-    
+    }
+
     /* http servers  */
     {
-        if (NULL == (http_servers = mmpool_new(1, sizeof(br_http_server_t), NULL))) return -1;
+        if (NULL == (http_servers = mmpool_new(1, sizeof (br_http_server_t), NULL))) return -1;
         br_http_server_add(http_servers, config.admin_http_port, on_stats_response);
     }
-    
+
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_new(1, sizeof(br_tcp_server_t), NULL))) return -1;
+        if (NULL == (tcp_servers = mmpool_new(1, sizeof (br_tcp_server_t), NULL))) return -1;
         br_tcp_server_add(tcp_servers,
-                          config.ais_tcp_server.name, 
-                          config.ais_tcp_server.port, 
-                          on_tcp_parse,
-                          config.ais_tcp_server.max_connections);
-    }    
+                config.ais_tcp_server.name,
+                config.ais_tcp_server.port,
+                on_tcp_parse,
+                config.ais_tcp_server.max_connections);
+    }
     br_run();
 
 #undef MM_GERR
 
 end:
 
-    /* cleaning */
-    {
+    /* cleaning */{
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
         br_tcp_servers_close(tcp_servers);
         ais_server_config_close(&config);
-    }    
+    }
 
 
     return r;

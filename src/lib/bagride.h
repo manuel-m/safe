@@ -101,7 +101,6 @@ int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
 
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
-
         
 int br_udp_client_add(mmpool_t* cli_pool_, const char* target_);
 void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_);

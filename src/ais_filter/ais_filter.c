@@ -18,9 +18,6 @@ static sad_filter_t filter;
 
 static struct ais_filter_config_s config;
 
-static char last_sentence[1024] = {0};
-static char forward_sentence[1024] = {0};
-
 static mmpool_t* udp_clients = NULL;
 
 static mmpool_t* udp_servers = NULL;
@@ -39,49 +36,48 @@ static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t*
     return 0;
 }
 
-static int on_ais_decoded(struct sad_filter_s * filter_) {
+static int on_ais_decoded(struct sad_filter_s * f_) {
 
-    struct ais_t * ais = &filter_->ais;
-    sub0_substring_t* sentence = filter_->sentence;
+    struct ais_t * ais = &f_->ais;
+    sub0_substring_t* sentence = f_->sentence;
 
-    if (1 == ais->type || 2 == ais->type || 3 == ais->type) {
+    if (3 < ais->type ) return 0;
 
-        if (0 == strncmp(last_sentence, sentence->start, sentence->n)) {
-            /* drop duplicate */
+    if (0 == strncmp(f_->last_sentence, sentence->start, sentence->n)) {
+        /* drop duplicate */
 #ifndef NDEBUG            
-            MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
-                    filter_->sentences,
-                    ais->type,
-                    ais->mmsi,
-                    filter_->sentence->start);
+        MM_INFO("drop duplicate %08" PRIu64 " type:%02d mmsi:%09u %s",
+                f_->sentences,
+                ais->type,
+                ais->mmsi,
+                f_->sentence->start);
 #endif            
-            return 0;
-        }
-        strncpy(last_sentence, sentence->start, sentence->n);
-        last_sentence[sentence->n + 1] = '0';
+        return 0;
+    }
+    strncpy(f_->last_sentence, sentence->start, sentence->n);
+    f_->last_sentence[sentence->n + 1] = '0';
 
-        const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
-        const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
+    const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
+    const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 
-        if (lon > config.geofilter.x1 && lon < config.geofilter.x2 
-          && lat < config.geofilter.y1 && lat > config.geofilter.y2) {
+    if (lon > config.geofilter.x1 && lon < config.geofilter.x2
+            && lat < config.geofilter.y1 && lat > config.geofilter.y2) {
 
-            strncpy(forward_sentence, sentence->start, sentence->n);
-            forward_sentence[sentence->n] = '\n';
-            forward_sentence[sentence->n + 1] = '\0';
+        strncpy(f_->forward_sentence, sentence->start, sentence->n);
+        f_->forward_sentence[sentence->n] = '\n';
+        f_->forward_sentence[sentence->n + 1] = '\0';
 
 #ifdef MM_ULTRADEBUG
-            MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
-                    filter_->sentences, ais->type, ais->mmsi,lat,lon,forward_sentence);
+        MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
+                f_->sentences, ais->type, ais->mmsi, lat, lon, forward_sentence);
 #endif /* MM_ULTRADEBUG */
 
-            if(0 < config.ais_out_udp.n){
-              br_udp_clients_send(udp_clients, forward_sentence);
-            }
-            
-            br_tcp_write_string((br_tcp_server_t*)(tcp_servers->items[0]->m_p), 
-                    forward_sentence, sentence->n + 1);
+        if (0 < config.ais_out_udp.n) {
+            br_udp_clients_send(udp_clients, f_->forward_sentence);
         }
+
+        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[0]->m_p),
+                f_->forward_sentence, sentence->n + 1);
     }
     return 0;
 }

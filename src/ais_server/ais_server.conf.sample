@@ -16,7 +16,7 @@ ais_tcp_server = {
 
 
 -- geographical server
-geoserver = { 
+geofilter = { 
                x1 = -16.0, 
                y1 = 45.0, 
                x2 = 9.0, 
@@ -24,7 +24,11 @@ geoserver = {
             }
 
 --  ais out put is not mandatory
- ais_out_udp = {  
-                 "192.168.200.13:9993",
-                 "l18:9993",
-               }
+ais_out_udp = {  
+                 "192.168.200.13:9992",
+                 "l18:9992",
+              }
+
+-- max ships
+max_ships = 100000
+ 

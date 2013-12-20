@@ -80,8 +80,19 @@ void* mmpool_iter_next(mmpool_iter_t* iter_){
     while(iter_->m_index < pool->m_alloc_len){
         mmpool_item_t* item = pool->items[iter_->m_index];
         ++(iter_->m_index);
-        /* only if valid */
-        if(item->m_state) return item->m_p;
+        if(item->m_state) return item->m_p; /* only if valid */
+    }
+    return NULL;
+}
+
+void* mmpool_find(mmpool_finder_t* finder_, void* right_) {
+
+    const mmpool_t* pool = finder_->m_pool;
+    while (finder_->m_index < pool->m_alloc_len) {
+        mmpool_item_t* item = pool->items[finder_->m_index];
+        void *p = item->m_p;
+        ++(finder_->m_index);
+        if (item->m_state && (0 == finder_->m_cmp_cb(p, right_))) return p;
     }
     return NULL;
 }

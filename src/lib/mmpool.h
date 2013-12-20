@@ -41,11 +41,25 @@ extern "C" {
     
     typedef struct mmpool_iter_s {
         int m_index;
-        mmpool_t* m_pool;
+        mmpool_t* m_pool; 
     } mmpool_iter_t;
 
-void mmpool_iter_init(mmpool_iter_t*, mmpool_t*);
 void* mmpool_iter_next(mmpool_iter_t*);
+
+
+/**
+ * compare callback, return 0 if equal
+ */
+typedef int (*mmcmp_cb)(void* left_, void* right_);
+
+    typedef struct mmpool_finder_s {
+        int m_index;
+        mmpool_t* m_pool;
+        mmcmp_cb m_cmp_cb;
+    } mmpool_finder_t;
+
+
+void* mmpool_find(mmpool_finder_t* finder_, void* right_);
     
 
 #ifdef	__cplusplus

@@ -26,9 +26,11 @@ static int br_isipv4(const char *ip_, size_t size_) {
 
 void br_tcp_servers_close(mmpool_t* srv_pool_) {
 
-    mmpool_iter_t iter;
-    mmpool_iter_init(&iter, srv_pool_);
-
+    mmpool_iter_t iter = {
+        .m_pool = srv_pool_,
+        .m_index = 0
+    };
+    
     br_tcp_server_t* srv = mmpool_iter_next(&iter);
 
     while (srv) {
@@ -111,7 +113,6 @@ int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_)
         uv_write(req, pclient, (uv_buf_t*) write_buffer, 1, on_after_write);
         pclient = (uv_stream_t*) mmpool_iter_next(&iter);
     }
-
     return 0;
 }
 

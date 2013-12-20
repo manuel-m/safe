@@ -5,12 +5,13 @@ mmapi_m = {
   basename = "ais_server_config",
   dirname = "src/ais_server",
   version = "0.1",
-  define = "__AIS_FILTER_CONFIG"
+  define = "__AIS_SERVER_CONFIG"
 }
 
 -- logical definition
-    -- singletons
+-- singletons
 mmapi = {
+         max_ships = "int",
          admin_http_port = "int",
          ais_udp_in_port = "int",
          ais_tcp_server = {
@@ -18,14 +19,8 @@ mmapi = {
                              port             = "int",
                              max_connections  = "int"
          },
-	 geoserver = { 
-	               x1 = "double",
-	               y1 = "double",
-	               x2 = "double",
-		       y2 = "double"
-	 }
 }
-    --  lists 
+--  lists 
 mmapi_list = {
 
 }
