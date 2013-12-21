@@ -2,7 +2,7 @@
 
 
 OUTDIR=./bin
-PROJ=ais_filter 
+PROJ="ais_filter ais_server" 
 
 LIBUV_A=$(find ./libs -name libuv.a)
 LIBLUA_A=$(find ./libs -name liblua.a)
@@ -10,8 +10,14 @@ LIBLUA_A=$(find ./libs -name liblua.a)
 # ensure output is available
 if [ ! -d ${OUTDIR} ]; then mkdir ./bin; fi 
 
+for f in ${PROJ}; do
+  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib -Ilibs/lua-5.2.2/src -Ilibs/libuv/include \
+  $(ls src/lib/*.c src/${f}/*.c) \
+  ${LIBUV_A} ${LIBLUA_A} -lpthread -lrt -lm
+  strip -s ${OUTDIR}/${f}
+done
 
-gcc -O3 -DNDEBUG -o ${OUTDIR}/${PROJ} -Isrc/lib -Ilibs/lua-5.2.2/src -Ilibs/libuv/include \
-$(ls src/lib/*.c src/${PROJ}/*.c) \
-${LIBUV_A} ${LIBLUA_A} -lpthread -lrt -lm
-strip -s ${OUTDIR}/${PROJ}
+#ais decoder (full decode)
+f=ais_decoder
+gcc -DSAD_ENABLE_ALL -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c
+strip -s ${OUTDIR}/${f}

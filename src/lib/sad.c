@@ -2085,38 +2085,175 @@ int sad_decode_file(sad_filter_t* filter_, const char* filename_) {
     return 0;
 }
 
+#ifdef SAD_ENABLE_MESSAGE_1
+#  define MMA1 "[x]"
+#else
+#  define MMA1 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_2
+#  define MMA2 "[x]"
+#else
+#  define MMA2 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_3
+#  define MMA3 "[x]"
+#else
+#  define MMA3 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_4
+#  define MMA4 "[x]"
+#else
+#  define MMA4 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_5
+#  define MMA5 "[x]"
+#else
+#  define MMA5 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_6
+#  define MMA6 "[x]"
+#else
+#  define MMA6 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_7
+#  define MMA7 "[x]"
+#else
+#  define MMA7 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_8
+#  define MMA8 "[x]"
+#else
+#  define MMA8 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_9
+#  define MMA9 "[x]"
+#else
+#  define MMA9 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_10
+#  define MMA10 "[x]"
+#else
+#  define MMA10 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_11
+#  define MMA11 "[x]"
+#else
+#  define MMA11 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_12
+#  define MMA12 "[x]"
+#else
+#  define MMA12 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_13
+#  define MMA13 "[x]"
+#else
+#  define MMA13 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_14
+#  define MMA14 "[x]"
+#else
+#  define MMA14 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_15
+#  define MMA15 "[x]"
+#else
+#  define MMA15 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_16
+#  define MMA16 "[x]"
+#else
+#  define MMA16 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_17
+#  define MMA17 "[x]"
+#else
+#  define MMA17 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_18
+#  define MMA18 "[x]"
+#else
+#  define MMA18 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_19
+#  define MMA19 "[x]"
+#else
+#  define MMA19 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_20
+#  define MMA20 "[x]"
+#else
+#  define MMA20 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_21
+#  define MMA21 "[x]"
+#else
+#  define MMA21 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_22
+#  define MMA22 "[x]"
+#else
+#  define MMA22 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_23
+#  define MMA23 "[x]"
+#else
+#  define MMA23 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_24
+#  define MMA24 "[x]"
+#else
+#  define MMA24 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_25
+#  define MMA25 "[x]"
+#else
+#  define MMA25 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_26
+#  define MMA26 "[x]"
+#else
+#  define MMA26 "[ ]"
+#endif
+#ifdef SAD_ENABLE_MESSAGE_27
+#  define MMA27 "[x]"
+#else
+#  define MMA27 "[ ]"
+#endif
+
+
 #define MF_FMT0 \
-        "messages  :  %" PRIu64 "\n" \
-        "frags     :  %" PRIu64 "\n" \
-        "errors    :  %" PRIu64 "\n" \
-        "duplicates:  %" PRIu64 "\n" \
-        "type  1   :  %" PRIu64 "\n" \
-        "type  2   :  %" PRIu64 "\n" \
-        "type  3   :  %" PRIu64 "\n" \
-        "type  4   :  %" PRIu64 "\n" \
-        "type  5   :  %" PRIu64 "\n" \
-        "type  6   :  %" PRIu64 "\n" \
-        "type  7   :  %" PRIu64 "\n" \
-        "type  8   :  %" PRIu64 "\n" \
-        "type  9   :  %" PRIu64 "\n" \
-        "type 10   :  %" PRIu64 "\n" \
-        "type 11   :  %" PRIu64 "\n" \
-        "type 12   :  %" PRIu64 "\n" \
-        "type 13   :  %" PRIu64 "\n" \
-        "type 14   :  %" PRIu64 "\n" \
-        "type 15   :  %" PRIu64 "\n" \
-        "type 16   :  %" PRIu64 "\n" \
-        "type 17   :  %" PRIu64 "\n" \
-        "type 18   :  %" PRIu64 "\n" \
-        "type 19   :  %" PRIu64 "\n" \
-        "type 20   :  %" PRIu64 "\n" \
-        "type 21   :  %" PRIu64 "\n" \
-        "type 22   :  %" PRIu64 "\n" \
-        "type 23   :  %" PRIu64 "\n" \
-        "type 24   :  %" PRIu64 "\n" \
-        "type 25   :  %" PRIu64 "\n" \
-        "type 26   :  %" PRIu64 "\n" \
-        "type 27   :  %" PRIu64 "\n" 
+        "messages  :   %" PRIu64 "\n" \
+        "frags     :   %" PRIu64 "\n" \
+        "errors    :   %" PRIu64 "\n" \
+        "duplicates:   %" PRIu64 "\n" \
+        "type  1 " MMA1 ":  %" PRIu64 "\n" \
+        "type  2 " MMA2 ":  %" PRIu64 "\n" \
+        "type  3 " MMA3 ":  %" PRIu64 "\n" \
+        "type  4 " MMA4 ":  %" PRIu64 "\n" \
+        "type  5 " MMA5 ":  %" PRIu64 "\n" \
+        "type  6 " MMA6 ":  %" PRIu64 "\n" \
+        "type  7 " MMA7 ":  %" PRIu64 "\n" \
+        "type  8 " MMA8 ":  %" PRIu64 "\n" \
+        "type  9 " MMA9 ":  %" PRIu64 "\n" \
+        "type 10 " MMA10 ":  %" PRIu64 "\n" \
+        "type 11 " MMA11 ":  %" PRIu64 "\n" \
+        "type 12 " MMA12 ":  %" PRIu64 "\n" \
+        "type 13 " MMA13 ":  %" PRIu64 "\n" \
+        "type 14 " MMA14 ":  %" PRIu64 "\n" \
+        "type 15 " MMA15 ":  %" PRIu64 "\n" \
+        "type 16 " MMA16 ":  %" PRIu64 "\n" \
+        "type 17 " MMA17 ":  %" PRIu64 "\n" \
+        "type 18 " MMA18 ":  %" PRIu64 "\n" \
+        "type 19 " MMA19 ":  %" PRIu64 "\n" \
+        "type 20 " MMA20 ":  %" PRIu64 "\n" \
+        "type 21 " MMA21 ":  %" PRIu64 "\n" \
+        "type 22 " MMA22 ":  %" PRIu64 "\n" \
+        "type 23 " MMA23 ":  %" PRIu64 "\n" \
+        "type 24 " MMA24 ":  %" PRIu64 "\n" \
+        "type 25 " MMA25 ":  %" PRIu64 "\n" \
+        "type 26 " MMA26 ":  %" PRIu64 "\n" \
+        "type 27 " MMA27 ":  %" PRIu64 "\n" 
 
 int sad_stats_string(char ** response_string, sad_filter_t* filter) {
 

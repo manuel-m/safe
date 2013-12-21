@@ -1,4 +1,5 @@
 /bin/
+cmake_w
 Makefile
 http-parser.dir
 CMakeCache.txt

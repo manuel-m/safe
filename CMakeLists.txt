@@ -28,22 +28,25 @@ file(MAKE_DIRECTORY ${DIST_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${DIST_DIR})
 set(LIBRARY_OUTPUT_PATH ${DIST_DIR})
 
+set(AIS_DECODER ais_decoder)
 set(AIS_FILTER ais_filter)
 set(AIS_SERVER ais_server)
+set(TEST_SAD test_sad)
 
+set(AIS_DECODER_EXE ${AIS_DECODER})
 set(AIS_FILTER_EXE ${AIS_FILTER})
 set(AIS_SERVER_EXE ${AIS_SERVER})
 
 set(LIBMM_SRC src/lib)
 set(LIBMM_A mm)
 
-
 if (CMAKE_BUILD_TYPE MATCHES Debug)
+  set(AIS_DECODER_EXE "${AIS_DECODER_EXE}_d")
   set(AIS_FILTER_EXE "${AIS_FILTER_EXE}_d")
   set(AIS_SERVER_EXE "${AIS_SERVER_EXE}_d")
+  set(TEST_SAD "${TEST_SAD}_d")
   set(LIBMM_A "${LIBMM_A}_d")
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
-
 
 include_directories (src ${LIBMM_SRC})
 
@@ -54,13 +57,15 @@ add_library(${LIBMM_A}
             ${LIBMM_SRC}/sub0.c 
             ${LIBMM_SRC}/bagride.c 
             ${LIBMM_SRC}/sad.c)
-
+            
+#ais decoder
+# only decode 1,2,3 type messages
+add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
 
 #ais filter            
 add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}_config.c src/${AIS_FILTER}/${AIS_FILTER}.c )
 target_link_libraries (${AIS_FILTER_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
 target_link_libraries (${AIS_FILTER_EXE} -lpthread -lrt -lm)
-
 
 #ais server            
 add_executable (${AIS_SERVER_EXE} src/${AIS_SERVER}/${AIS_SERVER}_config.c src/${AIS_SERVER}/${AIS_SERVER}.c )
@@ -73,4 +78,12 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
    install(TARGETS ${AIS_FILTER_EXE} DESTINATION bin)
    install(TARGETS ${AIS_SERVER_EXE} DESTINATION bin)
 endif (CMAKE_BUILD_TYPE MATCHES Release)
+
+add_subdirectory(coverage)
+
+# tests enable full ais message decoding
+add_subdirectory(tests)
+
+
+
 

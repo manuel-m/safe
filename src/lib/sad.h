@@ -15,10 +15,11 @@ extern "C" {
 
 // #define SAD_ENABLE_ALL 1
 
+#define SAD_ENABLE_MESSAGE_1 1
+#define SAD_ENABLE_MESSAGE_2 1
+#define SAD_ENABLE_MESSAGE_3 1  
+  
 #ifdef SAD_ENABLE_ALL
-#  define SAD_ENABLE_MESSAGE_1 1
-#  define SAD_ENABLE_MESSAGE_2 1
-#  define SAD_ENABLE_MESSAGE_3 1
 #  define SAD_ENABLE_MESSAGE_4 1
 #  define SAD_ENABLE_MESSAGE_5 1
 #  define SAD_ENABLE_MESSAGE_6 1

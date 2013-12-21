@@ -1,0 +1,11 @@
+#coverage
+if(DEFINED UNIX)
+if(CMAKE_COMPILER_IS_GNUCC)
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage ")
+    add_executable (sad_coverage  ./sad_coverage.c ../${LIBMM_SRC}/sad.c ../${LIBMM_SRC}/sub0.c )
+    include(CodeCoverage)
+    setup_target_for_coverage(coverage sad_coverage coverage)
+endif (CMAKE_BUILD_TYPE MATCHES Debug)
+endif(CMAKE_COMPILER_IS_GNUCC)
+endif(DEFINED UNIX)

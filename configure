@@ -41,25 +41,36 @@ f_top_makefile()
   GMAKEFILE=${PROJECT_DIR}/Makefile
 
   echo "GENDATE=$(f_date)" > ${GMAKEFILE}
-  echo "PROJECT_NAME=mss_filter" >> ${GMAKEFILE}
+  echo "PROJECT_NAME=safe" >> ${GMAKEFILE}
   echo "DEBUG_DIR=${CMAKE_W_ROOT}/${DEBUG_DIR}" >> ${GMAKEFILE}
   echo "RELEASE_DIR=${CMAKE_W_ROOT}/${RELEASE_DIR}" >> ${GMAKEFILE}
     
   cat >> ${GMAKEFILE} << "EOF"
 
-main: release debug 
+main: test_release debug 
 
-install: release
+install: release 
 	@ cd $(RELEASE_DIR); make install -s 
 	
-release: check
+release: check test_release
 	@ cd $(RELEASE_DIR); make -s 
 	
 verbose_release: check
 	@ cd $(RELEASE_DIR); make VERBOSE=1
 
 debug: check
-	@ cd $(DEBUG_DIR); make -s 
+	@ cd $(DEBUG_DIR); make -s
+	
+coverage: debug
+	@ cd $(DEBUG_DIR); make -s coverage
+	@ [ -d $(DEBUG_DIR)/coverage ] || mkdir -p  $(DEBUG_DIR)/coverage
+	@ echo "[code coverage result] $(DEBUG_DIR)/coverage/index.html"	
+	
+test_release: release
+	@ bin/test_sad
+	
+test_debug: debug
+	@ bin/test_sad_d
 	
 .PHONY: clean
 clean:
