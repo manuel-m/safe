@@ -52,7 +52,7 @@ main: test_release debug
 install: release 
 	@ cd $(RELEASE_DIR); make install -s 
 	
-release: check test_release
+release: check 
 	@ cd $(RELEASE_DIR); make -s 
 	
 verbose_release: check
