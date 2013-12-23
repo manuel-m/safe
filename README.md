@@ -32,6 +32,9 @@ ais_filter /path/to/ais_filter.conf
 TODO
 ======
 
-- JSON vessels server
-- http server using leafjs
 - smarter config code generator (multilevel,less code)
+- NMEA or timestamped NMEA output
+- vessels server
+- vessels history sharing
+- http server using leafjs
+

@@ -30,12 +30,14 @@ set(LIBRARY_OUTPUT_PATH ${DIST_DIR})
 
 set(AIS_DECODER ais_decoder)
 set(AIS_FILTER ais_filter)
+set(AIS_CONFIG ais_config)
 set(AIS_SERVER ais_server)
 set(TEST_SAD test_sad)
 
 set(AIS_DECODER_EXE ${AIS_DECODER})
 set(AIS_FILTER_EXE ${AIS_FILTER})
 set(AIS_SERVER_EXE ${AIS_SERVER})
+set(AIS_CONFIG_EXE ${AIS_CONFIG})
 
 set(LIBMM_SRC src/lib)
 set(LIBMM_A mm)
@@ -44,6 +46,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(AIS_DECODER_EXE "${AIS_DECODER_EXE}_d")
   set(AIS_FILTER_EXE "${AIS_FILTER_EXE}_d")
   set(AIS_SERVER_EXE "${AIS_SERVER_EXE}_d")
+  set(AIS_CONFIG_EXE "${AIS_CONFIG_EXE}_d")
   set(TEST_SAD "${TEST_SAD}_d")
   set(LIBMM_A "${LIBMM_A}_d")
 endif (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -61,6 +64,13 @@ add_library(${LIBMM_A}
 #ais decoder
 # only decode 1,2,3 type messages
 add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
+
+#ais config
+add_executable (${AIS_CONFIG_EXE}  src/${AIS_CONFIG}/${AIS_CONFIG}.c )
+target_link_libraries (${AIS_CONFIG_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
+target_link_libraries (${AIS_CONFIG_EXE} -lpthread -lrt -lm)
+
+
 
 #ais filter            
 add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}_config.c src/${AIS_FILTER}/${AIS_FILTER}.c )

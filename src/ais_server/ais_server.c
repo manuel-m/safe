@@ -113,13 +113,14 @@ static void ais_info_error(void) {
 
 int main(int argc, char **argv) {
     int r = 0;
+    MM_INFO("start %s", argv[0]);
 
 #define MM_GERR { r=-1;ais_info_error();goto end;}
 
     if (2 > argc) MM_GERR;
 
     MM_INFO("version=\"%s\"", MM_VERSION_INFO);
-    MM_INFO("exe=\"%s\"", argv[0]);
+    
     MM_INFO("config=\"%s\"", argv[1]);
 
     if (0 > ais_server_config_load(&config, argv[1])) MM_GERR;

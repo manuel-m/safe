@@ -13,6 +13,7 @@ gmon.out
 *.Plo
 *.lo
 *.la
+*.swp
 nbproject
 /build/
 lua-5.2.2/

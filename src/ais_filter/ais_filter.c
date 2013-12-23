@@ -92,13 +92,13 @@ static void ais_decode_error(const char* errm_){
 
 int main(int argc, char **argv) {
     int r = 0;
+    MM_INFO("start %s", argv[0]);
     
 #define MM_GERR { r=-1;user_info_dump();goto end;}
 
     if (2 > argc) MM_GERR;
 
     MM_INFO("version=\"%s\"", MM_VERSION_INFO );
-    MM_INFO("exe=\"%s\"", argv[0]);
     MM_INFO("conf=\"%s\"", argv[1]);
     if (0 > ais_filter_config_load(&conf,argv[1])) MM_GERR;
 
