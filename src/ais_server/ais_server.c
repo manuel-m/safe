@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
     /* live ships buffer init */
     {
-        if (NULL == (live_ships = mmpool_new(config.max_ships, sizeof (mmship_t), NULL))) {
+        if (NULL == (live_ships = mmpool_new(config.max_ships, config.max_ships, config.step_ships, sizeof (mmship_t), NULL))) {
             MM_ERR("too many requested ships: %d", config.max_ships);
             return -1;
         }
@@ -137,19 +137,19 @@ int main(int argc, char **argv) {
 
     /* udp servers  */
     {
-        if (NULL == (udp_servers = mmpool_new(1, sizeof (br_udp_server_t), NULL))) return -1;
+        if (NULL == (udp_servers = mmpool_easy_new(1, sizeof (br_udp_server_t), NULL))) return -1;
         br_udp_server_add(udp_servers, config.ais_udp_in_port, on_udp_parse);
     }
 
     /* http servers  */
     {
-        if (NULL == (http_servers = mmpool_new(1, sizeof (br_http_server_t), NULL))) return -1;
+        if (NULL == (http_servers = mmpool_easy_new(1, sizeof (br_http_server_t), NULL))) return -1;
         br_http_server_add(http_servers, config.admin_http_port, on_stats_response);
     }
 
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_new(1, sizeof (br_tcp_server_t), NULL))) return -1;
+        if (NULL == (tcp_servers = mmpool_easy_new(1, sizeof (br_tcp_server_t), NULL))) return -1;
         br_tcp_server_add(tcp_servers,
                 config.ais_tcp_server.name,
                 config.ais_tcp_server.port,

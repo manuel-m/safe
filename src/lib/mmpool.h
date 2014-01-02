@@ -22,16 +22,20 @@ extern "C" {
     } mmpool_item_t;
 
     typedef struct mmpool_s {
-        int m_max;
-        int m_alloc_len;
-        int m_taken_len;
+        unsigned int m_alloc_max;
+        unsigned int m_alloc_step;
+        unsigned int m_alloc_len;
+        unsigned int m_taken_len;
         size_t m_item_size;
         void* m_userdata; 
         long long m_taken_total;
         mmpool_item_t** items;
     } mmpool_t;
 
-    mmpool_t* mmpool_new(int max_, size_t item_size_,void* m_userdata);
+    mmpool_t* mmpool_new(unsigned int min_, unsigned int max_, unsigned int step_, 
+                         size_t item_size_,void* m_userdata);
+    
+#define mmpool_easy_new(MAX,ITEMSIZE, USERDATA) mmpool_new( MAX, MAX, 1, ITEMSIZE, USERDATA)
 
 #define mmpool_taken_len(PPOOL) PPOOL->m_taken_len 
 

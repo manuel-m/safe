@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     /* udp client init */
     if(0 < conf.ais_out_udp.n)
     {
-        if (NULL == (udp_clients = mmpool_new(conf.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
+        if (NULL == (udp_clients = mmpool_easy_new(conf.ais_out_udp.n, sizeof(br_udp_client_t), NULL))) return -1;
         int idx;
         for(idx=0;idx<conf.ais_out_udp.n;idx++){
           const char* s = conf.ais_out_udp.items[idx];
@@ -121,19 +121,19 @@ int main(int argc, char **argv) {
 
     /* udp servers  */
     {
-        if (NULL == (udp_servers = mmpool_new(1, sizeof(br_udp_server_t), NULL))) return -1;
+        if (NULL == (udp_servers = mmpool_easy_new(1, sizeof(br_udp_server_t), NULL))) return -1;
         br_udp_server_add(udp_servers, conf.ais_udp_in_port, on_udp_parse);
     }       
     
     /* http servers  */
     {
-        if (NULL == (http_servers = mmpool_new(1, sizeof(br_http_server_t), NULL))) return -1;
+        if (NULL == (http_servers = mmpool_easy_new(1, sizeof(br_http_server_t), NULL))) return -1;
         br_http_server_add(http_servers, conf.admin_http_port, on_stats_response);
     }
     
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_new(2, sizeof(br_tcp_server_t), NULL))) return -1;
+        if (NULL == (tcp_servers = mmpool_easy_new(2, sizeof(br_tcp_server_t), NULL))) return -1;
         br_tcp_server_add(tcp_servers,
                           conf.ais_tcp_server.name, 
                           conf.ais_tcp_server.port, 

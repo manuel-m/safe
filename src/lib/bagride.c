@@ -58,7 +58,7 @@ static void on_close(uv_handle_t* client_handle_) {
             server->m_name,
             server->m_port,
             server->m_clients->m_taken_len,
-            server->m_clients->m_max,
+            server->m_clients->m_alloc_max,
             client_handle_);
 }
 
@@ -149,7 +149,7 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
         MM_WARN("%s:%d max connections reached (%d) ... system wont accept new connections",
                 server->m_name,
                 server->m_port,
-                server->m_clients->m_max);
+                server->m_clients->m_alloc_max);
         /* workaround : connection is accepted and immediatly closed.
          This allow to re-accept new connections after some disconnections ...*/
         pclient = malloc(sizeof (uv_tcp_t));
@@ -171,7 +171,7 @@ static void server_on_connect(uv_stream_t* server_handle_, int status_) {
                 server->m_name,
                 server->m_port,
                 server->m_clients->m_taken_len,
-                server->m_clients->m_max,
+                server->m_clients->m_alloc_max,
                 server_handle_, pclient);
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
@@ -217,7 +217,7 @@ int br_tcp_server_add(mmpool_t* srv_pool_, const char* name_, int port_,
     server->m_server_handler.data = server;
 
     /* clients */
-    server->m_clients = mmpool_new(max_connections_, sizeof (br_tcp_t), server);
+    server->m_clients = mmpool_easy_new(max_connections_,sizeof (br_tcp_t), server);
 
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_tcp_bind(&server->m_server_handler, (const struct sockaddr*) &server->m_socketaddr));

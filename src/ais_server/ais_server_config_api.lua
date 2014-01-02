@@ -11,7 +11,9 @@ mmapi_m = {
 -- logical definition
 -- singletons
 mmapi = {
+         min_ships = "int",
          max_ships = "int",
+         step_ships = "int",
          admin_http_port = "int",
          ais_udp_in_port = "int",
          ais_tcp_server = {

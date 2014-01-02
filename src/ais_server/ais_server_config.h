@@ -5,16 +5,18 @@
 extern "C" {
 #endif
 
-#define MM_VERSION_INFO "v0.1 12/22/13 00:44:27"
+#define MM_VERSION_INFO "v0.1 01/02/14 16:17:10"
 struct ais_server_config_s{
+    int max_ships;
+    int step_ships;
     int ais_udp_in_port;
     struct {
          int port;
-         int max_connections;
          char* name;
+         int max_connections;
     } ais_tcp_server;
-    int max_ships;
     int admin_http_port;
+    int min_ships;
 };
 int ais_server_config_load(struct ais_server_config_s*,const char*);
 void ais_server_config_close(struct ais_server_config_s*);
