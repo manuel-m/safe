@@ -69,7 +69,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
             br_udp_clients_send(udp_clients, f_->forward_sentence);
         }
 
-        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[AIS_SRV]->m_p),
+        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[AIS_SRV].m_p),
                 f_->forward_sentence, sentence->n + 1);
     }
     return 0;
@@ -86,7 +86,7 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
 
 
 static void ais_decode_error(const char* errm_){
-  br_tcp_server_t* server = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR]->m_p);
+  br_tcp_server_t* server = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR].m_p);
   br_tcp_write_string(server, errm_, strlen(errm_));
 }
 

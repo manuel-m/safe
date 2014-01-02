@@ -29,7 +29,7 @@ extern "C" {
         size_t m_item_size;
         void* m_userdata; 
         long long m_taken_total;
-        mmpool_item_t** items;
+        mmpool_item_t* items;
     } mmpool_t;
 
     mmpool_t* mmpool_new(unsigned int min_, unsigned int max_, unsigned int step_, 
@@ -48,6 +48,12 @@ extern "C" {
         mmpool_t* m_pool; 
     } mmpool_iter_t;
 
+#define mmpool_iter_init(MMITER,MMPOOL)                                        \
+do {                                                                           \
+  MMITER.m_pool = (MMPOOL);                                                    \
+  MMITER.m_index = 0;                                                          \
+} while(0)
+    
 void* mmpool_iter_next(mmpool_iter_t*);
 
 
@@ -63,7 +69,14 @@ typedef int (*mmcmp_cb)(void* left_, void* right_);
     } mmpool_finder_t;
 
 
-void* mmpool_find(mmpool_finder_t* finder_, void* right_);
+#define mmpool_finder_init(MMFINDER,MMPOOL,CB)                                 \
+do {                                                                           \
+  MMFINDER.m_pool = (MMPOOL);                                                  \
+  MMFINDER.m_index = 0;                                                        \
+  MMFINDER.m_cmp_cb = CB;                                                      \
+} while(0)    
+    
+mmpool_item_t* mmpool_find(mmpool_finder_t* finder_, void* right_);
     
 
 #ifdef	__cplusplus

@@ -57,10 +57,11 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         .m_cmp_cb = mmsi_cmp_cb
     };
 
-    mmship_t* ship = (mmship_t*) mmpool_find(&finder, (void*) (&ais->mmsi));
+    mmpool_item_t * found_item = mmpool_find(&finder, (void*) (&ais->mmsi));
+    mmship_t* ship = NULL;
 
     /* !found */
-    if (NULL == ship) {
+    if (NULL == found_item) {
         mmpool_item_t* item = mmpool_take(live_ships);
         if (item) {
             ship = (mmship_t*) item->m_p;
@@ -68,6 +69,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
        }
     } else {
         update = 1;
+        ship = (mmship_t*) found_item->m_p;
         ++(ship->nb_update);
     }
 
@@ -78,7 +80,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         return -1;
     }
 
-    br_tcp_server_t* server = (br_tcp_server_t*) tcp_servers->items[0]->m_p;
+    br_tcp_server_t* server = (br_tcp_server_t*) tcp_servers->items[0].m_p;
     br_buf_t* buf = &server->m_write_buffer;
 
     if (0 == update) {
