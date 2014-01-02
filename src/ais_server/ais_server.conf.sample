@@ -29,6 +29,12 @@ ais_out_udp = {
                  "l18:9992",
               }
 
+-- min ships
+min_ships = 10000
+
 -- max ships
 max_ships = 100000
+
+-- step ships
+step_ships = 1000
  

@@ -20,6 +20,7 @@ mmpool_t* mmpool_new(unsigned int min_, unsigned int max_, unsigned int step_,
     mmpool_item_t* p = pool->items;
     for(i=0;i<min_;i++){
       p->m_p = calloc(1, item_size_);
+      p->m_parent = pool;
       ++p;
     }
     
