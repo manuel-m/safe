@@ -17,6 +17,9 @@ for f in ${PROJ}; do
   strip -s ${OUTDIR}/${f}
 done
 
+#CC flags
+MMCC="-fwhole-program -ffast-math -msse2"
+
 #ais decoder (full decode)
 f=ais_decoder
 gcc -DSAD_ENABLE_ALL -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c

@@ -70,7 +70,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector")
 
    if (CMAKE_BUILD_TYPE MATCHES Release)
-      set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mmmx -msse -m3dnow")
+      set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mmmx -msse -msse2 -m3dnow")
    endif (CMAKE_BUILD_TYPE MATCHES Release)
 
    if (CMAKE_BUILD_TYPE MATCHES Debug)
