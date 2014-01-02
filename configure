@@ -67,9 +67,11 @@ coverage: debug
 	@ echo "[code coverage result] $(DEBUG_DIR)/coverage/index.html"	
 	
 test_release: release
+	@ bin/test_pool
 	@ bin/test_sad
 	
 test_debug: debug
+	@ bin/test_pool_d
 	@ bin/test_sad_d
 	
 .PHONY: clean
