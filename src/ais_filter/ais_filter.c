@@ -82,6 +82,7 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
 }
 
 static void ais_decode_error(const char* errm_){
+  if (0 == mmpool_taken_len(srv_aidvm_error->m_clients)) return;
   br_tcp_write_string(srv_aidvm_error, errm_, strlen(errm_));
 }
 
