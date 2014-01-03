@@ -94,8 +94,6 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
 
 int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_) {
 
-    
-
     mmpool_iter_t iter = {
         .m_index = 0,
         .m_pool = server_->m_clients
@@ -194,8 +192,6 @@ int br_udp_server_add(mmpool_t* srv_pool_, int port_, void* user_parse_cb_) {
       MM_ERR("udp server init failed: %s", uv_strerror(r));
       return -1;
     }
-    
-    
     server->m_handler.data = server;
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_socketaddr));
     MM_ASSERT(0 == uv_udp_bind(&server->m_handler, (const struct sockaddr*) &server->m_socketaddr, 0));
@@ -437,7 +433,6 @@ int br_http_server_add(mmpool_t* srv_pool_, int port_, void* gen_response_cb_) {
     MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_addr));
     MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
     return 0;
-
 }
 
 /**
@@ -445,11 +440,13 @@ int br_http_server_add(mmpool_t* srv_pool_, int port_, void* gen_response_cb_) {
  */
 static uv_timer_t __brtsref_req;
 static unsigned __brtsref = 0;
+static char __brtsrefhex[8 + 1] = "00000000";
 
 static void on_tsref_update(uv_timer_t* handle, int status){
     (void)handle;
     (void)status;
     __brtsref = (unsigned)time(NULL);
+    snprintf(__brtsrefhex,8 + 1,"%x",__brtsref);
 }
 
 void br_tsref_init(unsigned refresh_period_){
@@ -457,6 +454,7 @@ void br_tsref_init(unsigned refresh_period_){
     uv_timer_start(&__brtsref_req, on_tsref_update, 0, refresh_period_);
 }
 unsigned br_tsref_get(){ return __brtsref;}
+char* br_tsrefhex_get(){ return &__brtsrefhex[0];}
 
 /**
  * common

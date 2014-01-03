@@ -12,6 +12,8 @@
 #define AIS_SRV       0
 #define AIS_SRV_ERROR 1
 
+#define TIMESTAMP_UPDATE_MS 1000
+
 static sad_filter_t filter;
 
 static struct ais_filter_config_s conf;
@@ -43,7 +45,7 @@ static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t*
 static int on_ais_decoded(struct sad_filter_s * f_) {
 
     struct ais_t * ais = &f_->ais;
-    sub0_substring_t* sentence = f_->sentence;
+    sub0_substring_t* s = f_->sentence;
 
     if (3 < ais->type ) return 0;
 
@@ -53,22 +55,27 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     if (lon > conf.geofilter.x1 && lon < conf.geofilter.x2
             && lat < conf.geofilter.y1 && lat > conf.geofilter.y2) {
 
-        strncpy(f_->forward_sentence, sentence->start, sentence->n);
-        f_->forward_sentence[sentence->n] = '\n';
-        f_->forward_sentence[sentence->n + 1] = '\0';
-
+        const char* hx = br_tsrefhex_get();
+        char* fwd8 = &f_->forward_sentence[8];
+    
+        strncpy(f_->forward_sentence, hx, 8 + 1);
+        strncpy(fwd8, s->start, s->n);
+        f_->forward_sentence[s->n + 8 ] = '\n';
+        f_->forward_sentence[s->n + 8 + 1] = '\0';
+    
 #ifdef MM_ULTRADEBUG
         MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
-                f_->sentences, ais->type, ais->mmsi, lat, lon, forward_sentence);
+                f_->sentences, ais->type, ais->mmsi, lat, lon, fwd8);
 #endif /* MM_ULTRADEBUG */
 
+        /* for udp !aivdm as forwarded without hex timestamp */
         if (0 < conf.ais_out_udp.n) {
-            br_udp_clients_send(udp_clients, f_->forward_sentence);
+            br_udp_clients_send(udp_clients, fwd8);
         }
         
         /* only if we have clients */
         if (0 == mmpool_taken_len(srv_aidvm->m_clients)) return 0;
-        br_tcp_write_string(srv_aidvm,f_->forward_sentence, sentence->n + 1);
+        br_tcp_write_string(srv_aidvm,f_->forward_sentence, s->n + 8 + 1);
     }
     return 0;
 }
@@ -90,7 +97,7 @@ int main(int argc, char **argv) {
     int r = 0;
     MM_INFO("start %s", argv[0]);
     
-    br_tsref_init(1000);
+    br_tsref_init(TIMESTAMP_UPDATE_MS);
     
 #define MM_GERR { r=-1;user_info_dump();goto end;}
 

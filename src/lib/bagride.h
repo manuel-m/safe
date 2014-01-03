@@ -118,7 +118,7 @@ int br_http_server_add(mmpool_t*  serv_pool_, int port_, void* gen_response_cb_)
  */
 void br_tsref_init();
 unsigned br_tsref_get();
-  
+char* br_tsrefhex_get();
 
 /**
  * common
