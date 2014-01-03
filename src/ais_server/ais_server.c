@@ -21,8 +21,7 @@ typedef struct mmship_s {
 
 static mmpool_t* live_ships = NULL;
 
-static mmpool_t* http_servers = NULL;
-
+static br_http_server_t srv_out_http_stats;
 static br_tcp_server_t srv_out_ships;
 static br_udp_server_t srv_in_ais;
 
@@ -130,10 +129,7 @@ int main(int argc, char **argv) {
     br_udp_server_init(&srv_in_ais, config.ais_udp_in_port, on_udp_parse);
 
     /* http servers  */
-    {
-        if (NULL == (http_servers = mmpool_easy_new(1, sizeof (br_http_server_t), NULL))) return -1;
-        br_http_server_add(http_servers, config.admin_http_port, on_stats_response);
-    }
+    br_http_server_init(&srv_out_http_stats, config.admin_http_port, on_stats_response);
 
     /* tcp server  */
     br_tcp_server_init(&srv_out_ships,
@@ -148,8 +144,8 @@ int main(int argc, char **argv) {
 
 end:
 
-    /* cleaning */{
-        mmpool_free(http_servers);
+    /* cleaning */
+    {
         br_tcp_server_close(&srv_out_ships);
         ais_server_config_close(&config);
     }

@@ -20,12 +20,10 @@ static struct ais_filter_config_s conf;
 
 static mmpool_t* udp_clients = NULL;
 
-static br_udp_server_t srv_in_raw_ais;
-
-static mmpool_t* http_servers = NULL;
-
-static br_tcp_server_t srv_out_filtered_ais;
-static br_tcp_server_t srv_out_filtered_ais_error;
+static br_udp_server_t  srv_in_raw_ais;
+static br_http_server_t srv_out_http_stats;
+static br_tcp_server_t  srv_out_filtered_ais;
+static br_tcp_server_t  srv_out_filtered_ais_error;
 
 static void user_info_dump(void) {
     printf(HELP_USAGE "\n");
@@ -126,11 +124,8 @@ int main(int argc, char **argv) {
     /* udp server  */
     br_udp_server_init(&srv_in_raw_ais, conf.ais_udp_in_port, on_udp_parse);
     
-    /* http servers  */
-    {
-        if (NULL == (http_servers = mmpool_easy_new(1, sizeof(br_http_server_t), NULL))) return -1;
-        br_http_server_add(http_servers, conf.admin_http_port, on_stats_response);
-    }
+    /* http server  */
+    br_http_server_init(&srv_out_http_stats, conf.admin_http_port, on_stats_response);
     
     /* tcp servers  */
     br_tcp_server_init(&srv_out_filtered_ais,
@@ -154,7 +149,6 @@ end:
     /* cleaning */
     {
         mmpool_free(udp_clients);
-        mmpool_free(http_servers);
         br_tcp_server_close(&srv_out_filtered_ais);
         br_tcp_server_close(&srv_out_filtered_ais_error);
         ais_filter_config_close(&conf);

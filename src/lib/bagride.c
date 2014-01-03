@@ -400,20 +400,17 @@ static void on_http_connect(uv_stream_t* handle_, int status_) {
     }
 }
 
-int br_http_server_add(mmpool_t* srv_pool_, int port_, void* gen_response_cb_) {
+int br_http_server_init(br_http_server_t* srv_, int port_, void* gen_response_cb_) {
 
-    mmpool_item_t* pool_item = mmpool_take(srv_pool_);
-    if (NULL == pool_item) return -1;
-    br_http_server_t* server = (br_http_server_t*) pool_item->m_p;
-    server->m_parser_settings.on_headers_complete = on_headers_complete;
-    server->m_port = port_;
-    server->m_gen_response_cb = gen_response_cb_;
-    MM_INFO("(%d) http %d", server->m_port);
-    uv_tcp_init(uv_default_loop(), &server->m_handler);
-    server->m_handler.data = server;
-    MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server->m_port, &server->m_addr));
-    MM_ASSERT(0 == uv_tcp_bind(&server->m_handler, (const struct sockaddr*) &server->m_addr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
+    srv_->m_parser_settings.on_headers_complete = on_headers_complete;
+    srv_->m_port = port_;
+    srv_->m_gen_response_cb = gen_response_cb_;
+    MM_INFO("(%d) http %d", srv_->m_port);
+    uv_tcp_init(uv_default_loop(), &srv_->m_handler);
+    srv_->m_handler.data = srv_;
+    MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", srv_->m_port, &srv_->m_addr));
+    MM_ASSERT(0 == uv_tcp_bind(&srv_->m_handler, (const struct sockaddr*) &srv_->m_addr));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & srv_->m_handler, BR_MAX_CONNECTIONS, on_http_connect));
     return 0;
 }
 
