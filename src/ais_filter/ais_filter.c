@@ -1,10 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
-#include "uv.h"
 
 #include "sad.h"
 #include "bagride.h"
@@ -83,16 +78,26 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
     return 0;
 }
 
-
-
 static void ais_decode_error(const char* errm_){
   br_tcp_server_t* server = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR].m_p);
   br_tcp_write_string(server, errm_, strlen(errm_));
 }
 
+// static void on_time_update(uv_timer_t* handle, int status){
+//     (void)handle;
+//     (void)status;
+//     MM_INFO("time update %u",(unsigned)time(NULL)); 
+// }
+
 int main(int argc, char **argv) {
     int r = 0;
     MM_INFO("start %s", argv[0]);
+    
+    br_tsref_init(1000);
+    
+//     uv_timer_t timer_req;
+//     uv_timer_init(uv_default_loop(), &timer_req);
+//     uv_timer_start(&timer_req, on_time_update, 0, 1000);
     
 #define MM_GERR { r=-1;user_info_dump();goto end;}
 

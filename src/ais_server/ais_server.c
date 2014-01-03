@@ -1,10 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
-#include "uv.h"
 
 #include "sad.h"
 #include "bagride.h"
@@ -19,8 +14,8 @@ static sad_filter_t filter;
 static struct ais_server_config_s config;
 
 typedef struct mmship_s {
-    unsigned int mmsi;
-    unsigned int nb_update;
+    unsigned mmsi;
+    unsigned nb_update;
     type123_t ais;
 } mmship_t;
 
@@ -50,12 +45,10 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     int update = 0;
 
     if (3 < ais->type) return 0;
+    
+    mmpool_finder_t finder;
+    mmpool_finder_init(finder, live_ships, mmsi_cmp_cb);
 
-    mmpool_finder_t finder = {
-        .m_index = 0,
-        .m_pool = live_ships,
-        .m_cmp_cb = mmsi_cmp_cb
-    };
 
     mmpool_item_t * found_item = mmpool_find(&finder, (void*) (&ais->mmsi));
     mmship_t* ship = NULL;

@@ -23,7 +23,6 @@ do {                                                                           \
 } while(0)
 
 int main(int argc, char **argv) {
-    (void) argv;
     (void) argc;
 
     /* mmpool_new */
@@ -242,7 +241,7 @@ int main(int argc, char **argv) {
     }
 
     if (0 == has_failed) {
-        printf("[PASS] test mpool\n");
+        printf("[PASS] %s\n",argv[0]);
     }
 
     return has_failed;

@@ -1,11 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "bagride.h"
 #include "sub0.h"
 #include "mmtrace.h"
-
-
 
 static int br_isipv4(const char *ip_, size_t size_) {
     int i;
@@ -440,6 +439,24 @@ int br_http_server_add(mmpool_t* srv_pool_, int port_, void* gen_response_cb_) {
     return 0;
 
 }
+
+/**
+ * timestamp reference
+ */
+static uv_timer_t __brtsref_req;
+static unsigned __brtsref = 0;
+
+static void on_tsref_update(uv_timer_t* handle, int status){
+    (void)handle;
+    (void)status;
+    __brtsref = (unsigned)time(NULL);
+}
+
+void br_tsref_init(unsigned refresh_period_){
+    uv_timer_init(uv_default_loop(), &__brtsref_req);
+    uv_timer_start(&__brtsref_req, on_tsref_update, 0, refresh_period_);
+}
+unsigned br_tsref_get(){ return __brtsref;}
 
 /**
  * common

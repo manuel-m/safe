@@ -3,7 +3,7 @@
 
 #include "mmpool.h"
 
-mmpool_t* mmpool_new(unsigned int min_, unsigned int max_, unsigned int step_, 
+mmpool_t* mmpool_new(unsigned min_, unsigned max_, unsigned step_, 
                      size_t item_size_, void* userdata_) {
 
     mmpool_t* pool = (mmpool_t*) calloc(1, sizeof (mmpool_t));
@@ -44,10 +44,10 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
     /* current alloc saturation, need extra alloc */
     if( pool_->m_taken_len == pool_->m_alloc_len){
       
-    const unsigned int previous_size = pool_->m_alloc_len;
-    unsigned int next_size = pool_->m_alloc_len + pool_->m_alloc_step;
+    const unsigned previous_size = pool_->m_alloc_len;
+    unsigned next_size = pool_->m_alloc_len + pool_->m_alloc_step;
     if(next_size > pool_->m_alloc_max) next_size = pool_->m_alloc_max;
-    const unsigned int size_increase = next_size - previous_size;
+    const unsigned size_increase = next_size - previous_size;
     
     mmpool_item_t* more_items = (mmpool_item_t*) realloc(pool_->items, next_size * sizeof (mmpool_item_t));
     
@@ -58,7 +58,7 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
     pool_->items = more_items;
     
     mmpool_item_t* p = &pool_->items[previous_size];
-    unsigned int i;
+    unsigned i;
     for(i=0;i<size_increase;i++){
       p->m_p = calloc(1, pool_->m_item_size);
       p->m_parent = pool_;
@@ -75,7 +75,7 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
     }
 
     /* use a previously allocated but not used */    
-    int i;
+    unsigned i;
     for(i=0;i<=pool_->m_taken_len;i++){
         mmpool_item_t* item = &pool_->items[i];
         if(0 == item->m_state){
@@ -89,14 +89,13 @@ mmpool_item_t* mmpool_take(mmpool_t* pool_) {
 }
 
 void mmpool_giveback(mmpool_item_t* item_) {
-    
     --(item_->m_parent->m_taken_len);
     item_->m_state = 0;
 }
 
 void mmpool_free(mmpool_t* pool_) {
     if(NULL == pool_) return;
-    int i;
+    unsigned i;
     for(i=0;i<pool_->m_alloc_len;i++){
         mmpool_item_t* item = &pool_->items[i];
         if(item){

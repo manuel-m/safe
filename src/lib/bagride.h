@@ -112,6 +112,14 @@ int br_tcp_server_add(mmpool_t* serv_pool_, const char* name_, int port_,
 
 int br_http_server_add(mmpool_t*  serv_pool_, int port_, void* gen_response_cb_);
 
+
+/**
+ * timestamp
+ */
+void br_tsref_init();
+unsigned br_tsref_get();
+  
+
 /**
  * common
  */
