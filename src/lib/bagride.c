@@ -94,7 +94,7 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
 
 int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_) {
 
-    if (0 == len_ || 0 == mmpool_taken_len(server_->m_clients)) return 0;
+    
 
     mmpool_iter_t iter = {
         .m_index = 0,

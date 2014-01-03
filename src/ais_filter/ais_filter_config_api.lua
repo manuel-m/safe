@@ -1,4 +1,4 @@
--- 'mss_filter' API definition
+-- 'ais_filter' API definition
 
 -- technical definition
 mmapi_m = {
@@ -16,7 +16,7 @@ mmapi = {
          ais_tcp_server = {
                              name             = "char*",
                              port             = "int",
-                             max_connections  = "int"
+                             max_connections  = "int",
          },
          ais_tcp_error = {
                              name             = "char*",

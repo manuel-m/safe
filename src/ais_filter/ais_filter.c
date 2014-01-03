@@ -22,6 +22,8 @@ static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
 static mmpool_t* tcp_servers = NULL;
 
+br_tcp_server_t* srv_aidvm = NULL;
+br_tcp_server_t* srv_aidvm_error = NULL;
 
 static void user_info_dump(void) {
     printf(HELP_USAGE "\n");
@@ -63,9 +65,10 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         if (0 < conf.ais_out_udp.n) {
             br_udp_clients_send(udp_clients, f_->forward_sentence);
         }
-
-        br_tcp_write_string((br_tcp_server_t*) (tcp_servers->items[AIS_SRV].m_p),
-                f_->forward_sentence, sentence->n + 1);
+        
+        /* only if we have clients */
+        if (0 == mmpool_taken_len(srv_aidvm->m_clients)) return 0;
+        br_tcp_write_string(srv_aidvm,f_->forward_sentence, sentence->n + 1);
     }
     return 0;
 }
@@ -79,25 +82,14 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
 }
 
 static void ais_decode_error(const char* errm_){
-  br_tcp_server_t* server = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR].m_p);
-  br_tcp_write_string(server, errm_, strlen(errm_));
+  br_tcp_write_string(srv_aidvm_error, errm_, strlen(errm_));
 }
-
-// static void on_time_update(uv_timer_t* handle, int status){
-//     (void)handle;
-//     (void)status;
-//     MM_INFO("time update %u",(unsigned)time(NULL)); 
-// }
 
 int main(int argc, char **argv) {
     int r = 0;
     MM_INFO("start %s", argv[0]);
     
     br_tsref_init(1000);
-    
-//     uv_timer_t timer_req;
-//     uv_timer_init(uv_default_loop(), &timer_req);
-//     uv_timer_start(&timer_req, on_time_update, 0, 1000);
     
 #define MM_GERR { r=-1;user_info_dump();goto end;}
 
@@ -151,7 +143,11 @@ int main(int argc, char **argv) {
                           on_tcp_parse,
                           conf.ais_tcp_error.max_connections);        
         
-    }    
+    }
+    
+    srv_aidvm = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV].m_p);
+    srv_aidvm_error = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR].m_p);
+    
     br_run();
 
 #undef MM_GERR
