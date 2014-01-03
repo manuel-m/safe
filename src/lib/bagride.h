@@ -104,7 +104,7 @@ typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 int br_udp_client_add(mmpool_t* cli_pool_, const char* target_);
 void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_);
 
-int br_udp_server_add(mmpool_t* serv_pool_, int port_, void* user_parse_cb_);
+int br_udp_server_init(br_udp_server_t* srv_, int port_, void* user_parse_cb_);
 
 int br_tcp_server_init(br_tcp_server_t* server_, const char* name_, int port_,
         void* user_parse_cb_, int max_connections_);

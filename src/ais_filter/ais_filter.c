@@ -20,11 +20,12 @@ static struct ais_filter_config_s conf;
 
 static mmpool_t* udp_clients = NULL;
 
-static mmpool_t* udp_servers = NULL;
+static br_udp_server_t srv_in_raw_ais;
+
 static mmpool_t* http_servers = NULL;
 
-static br_tcp_server_t srv_aidvm;
-static br_tcp_server_t srv_aidvm_error;
+static br_tcp_server_t srv_out_filtered_ais;
+static br_tcp_server_t srv_out_filtered_ais_error;
 
 static void user_info_dump(void) {
     printf(HELP_USAGE "\n");
@@ -73,8 +74,8 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         }
         
         /* only if we have clients */
-        if (0 == mmpool_taken_len(srv_aidvm.m_clients)) return 0;
-        br_tcp_write_string(&srv_aidvm,f_->forward_sentence, s->n + MM_HEX_TIMESTAMP_LEN + 1);
+        if (0 == mmpool_taken_len(srv_out_filtered_ais.m_clients)) return 0;
+        br_tcp_write_string(&srv_out_filtered_ais,f_->forward_sentence, s->n + MM_HEX_TIMESTAMP_LEN + 1);
     }
     return 0;
 }
@@ -88,8 +89,8 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
 }
 
 static void ais_decode_error(const char* errm_){
-  if (0 == mmpool_taken_len(srv_aidvm_error.m_clients)) return;
-  br_tcp_write_string(&srv_aidvm_error, errm_, strlen(errm_));
+  if (0 == mmpool_taken_len(srv_out_filtered_ais_error.m_clients)) return;
+  br_tcp_write_string(&srv_out_filtered_ais_error, errm_, strlen(errm_));
 }
 
 int main(int argc, char **argv) {
@@ -120,14 +121,10 @@ int main(int argc, char **argv) {
             MM_INFO("ais_out_udp[%d]=\"%s\"", (idx+1),s);
         }
     }
-        
     if (sad_filter_init(&filter, on_ais_decoded, NULL,ais_decode_error)) MM_GERR;
 
-    /* udp servers  */
-    {
-        if (NULL == (udp_servers = mmpool_easy_new(1, sizeof(br_udp_server_t), NULL))) return -1;
-        br_udp_server_add(udp_servers, conf.ais_udp_in_port, on_udp_parse);
-    }       
+    /* udp server  */
+    br_udp_server_init(&srv_in_raw_ais, conf.ais_udp_in_port, on_udp_parse);
     
     /* http servers  */
     {
@@ -136,20 +133,17 @@ int main(int argc, char **argv) {
     }
     
     /* tcp servers  */
-    {
-        br_tcp_server_init(&srv_aidvm,
-                          conf.ais_tcp_server.name, 
-                          conf.ais_tcp_server.port, 
-                          on_tcp_parse,
-                          conf.ais_tcp_server.max_connections);
+    br_tcp_server_init(&srv_out_filtered_ais,
+                       conf.ais_tcp_server.name, 
+                       conf.ais_tcp_server.port, 
+                       on_tcp_parse,
+                       conf.ais_tcp_server.max_connections);
         
-        br_tcp_server_init(&srv_aidvm_error,
-                          conf.ais_tcp_error.name, 
-                          conf.ais_tcp_error.port, 
-                          on_tcp_parse,
-                          conf.ais_tcp_error.max_connections);        
-        
-    }
+    br_tcp_server_init(&srv_out_filtered_ais_error,
+                       conf.ais_tcp_error.name, 
+                       conf.ais_tcp_error.port, 
+                       on_tcp_parse,
+                       conf.ais_tcp_error.max_connections);        
     
     br_run();
 
@@ -160,10 +154,9 @@ end:
     /* cleaning */
     {
         mmpool_free(udp_clients);
-        mmpool_free(udp_servers);
         mmpool_free(http_servers);
-        br_tcp_server_close(&srv_aidvm);
-        br_tcp_server_close(&srv_aidvm_error);
+        br_tcp_server_close(&srv_out_filtered_ais);
+        br_tcp_server_close(&srv_out_filtered_ais_error);
         ais_filter_config_close(&conf);
     }    
 
