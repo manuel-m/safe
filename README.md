@@ -19,7 +19,6 @@ build instructions
 
 - windows 
 - see buildit_win script on windows (mingw expected in /c/Mingw)
-- for convenience, win32/mss_filter32.exe is provided
 
 - ./boostrap nolibs to avoid libuv.a liblua.a build
 
@@ -28,13 +27,19 @@ usage
 
 ais_filter /path/to/ais_filter.conf
 
-
-TODO
-======
+in course
+=========
 
 - smarter config code generator (multilevel,less code)
 - NMEA or timestamped NMEA output
+
+TODO
+=====
+
+- tcp client tools
+- vessels history 
+- vessels history FT
+- default config display
 - vessels server
-- vessels history sharing
 - http server using leafjs
 
