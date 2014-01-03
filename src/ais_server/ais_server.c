@@ -23,7 +23,9 @@ static mmpool_t* live_ships = NULL;
 
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
-static mmpool_t* tcp_servers = NULL;
+// static mmpool_t* tcp_servers = NULL;
+
+static br_tcp_server_t srv_aidvm;
 
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
@@ -72,9 +74,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         MM_ERR("live ships buffer  overflow ...");
         return -1;
     }
-
-    br_tcp_server_t* server = (br_tcp_server_t*) tcp_servers->items[0].m_p;
-    br_buf_t* buf = &server->m_write_buffer;
+    br_buf_t* buf = &srv_aidvm.m_write_buffer;
 
     if (0 == update) {
         buf->len = asprintf(&buf->base, "N %d\t(u:%d)[%d/%d]\n", ais->mmsi,ship->nb_update, 
@@ -88,7 +88,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
     if (0 > buf->len) return -1;
 
-    br_tcp_write_string(server, buf->base, buf->len);
+    br_tcp_write_string(&srv_aidvm, buf->base, buf->len);
 
 
     return 0;
@@ -144,8 +144,7 @@ int main(int argc, char **argv) {
 
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_easy_new(1, sizeof (br_tcp_server_t), NULL))) return -1;
-        br_tcp_server_add(tcp_servers,
+        br_tcp_server_init(&srv_aidvm,
                 config.ais_tcp_server.name,
                 config.ais_tcp_server.port,
                 on_tcp_parse,
@@ -160,7 +159,7 @@ end:
     /* cleaning */{
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
-        br_tcp_servers_close(tcp_servers);
+        br_tcp_server_close(&srv_aidvm);
         ais_server_config_close(&config);
     }
 

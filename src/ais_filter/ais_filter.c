@@ -22,10 +22,9 @@ static mmpool_t* udp_clients = NULL;
 
 static mmpool_t* udp_servers = NULL;
 static mmpool_t* http_servers = NULL;
-static mmpool_t* tcp_servers = NULL;
 
-br_tcp_server_t* srv_aidvm = NULL;
-br_tcp_server_t* srv_aidvm_error = NULL;
+static br_tcp_server_t srv_aidvm;
+static br_tcp_server_t srv_aidvm_error;
 
 static void user_info_dump(void) {
     printf(HELP_USAGE "\n");
@@ -56,26 +55,26 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
             && lat < conf.geofilter.y1 && lat > conf.geofilter.y2) {
 
         const char* hx = br_tsrefhex_get();
-        char* fwd8 = &f_->forward_sentence[8];
+        char* fwd8 = &f_->forward_sentence[MM_HEX_TIMESTAMP_LEN];
     
-        strncpy(f_->forward_sentence, hx, 8 + 1);
+        strncpy(f_->forward_sentence, hx, MM_HEX_TIMESTAMP_LEN + 1);
         strncpy(fwd8, s->start, s->n);
-        f_->forward_sentence[s->n + 8 ] = '\n';
-        f_->forward_sentence[s->n + 8 + 1] = '\0';
+        f_->forward_sentence[s->n + MM_HEX_TIMESTAMP_LEN ] = '\n';
+        f_->forward_sentence[s->n + MM_HEX_TIMESTAMP_LEN + 1] = '\0';
     
 #ifdef MM_ULTRADEBUG
         MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
                 f_->sentences, ais->type, ais->mmsi, lat, lon, fwd8);
 #endif /* MM_ULTRADEBUG */
 
-        /* for udp !aivdm as forwarded without hex timestamp */
+        /* for udp !aivdm forwarded without hex timestamp */
         if (0 < conf.ais_out_udp.n) {
             br_udp_clients_send(udp_clients, fwd8);
         }
         
         /* only if we have clients */
-        if (0 == mmpool_taken_len(srv_aidvm->m_clients)) return 0;
-        br_tcp_write_string(srv_aidvm,f_->forward_sentence, s->n + 8 + 1);
+        if (0 == mmpool_taken_len(srv_aidvm.m_clients)) return 0;
+        br_tcp_write_string(&srv_aidvm,f_->forward_sentence, s->n + MM_HEX_TIMESTAMP_LEN + 1);
     }
     return 0;
 }
@@ -89,8 +88,8 @@ static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t*
 }
 
 static void ais_decode_error(const char* errm_){
-  if (0 == mmpool_taken_len(srv_aidvm_error->m_clients)) return;
-  br_tcp_write_string(srv_aidvm_error, errm_, strlen(errm_));
+  if (0 == mmpool_taken_len(srv_aidvm_error.m_clients)) return;
+  br_tcp_write_string(&srv_aidvm_error, errm_, strlen(errm_));
 }
 
 int main(int argc, char **argv) {
@@ -138,23 +137,19 @@ int main(int argc, char **argv) {
     
     /* tcp servers  */
     {
-        if (NULL == (tcp_servers = mmpool_easy_new(2, sizeof(br_tcp_server_t), NULL))) return -1;
-        br_tcp_server_add(tcp_servers,
+        br_tcp_server_init(&srv_aidvm,
                           conf.ais_tcp_server.name, 
                           conf.ais_tcp_server.port, 
                           on_tcp_parse,
                           conf.ais_tcp_server.max_connections);
         
-        br_tcp_server_add(tcp_servers,
+        br_tcp_server_init(&srv_aidvm_error,
                           conf.ais_tcp_error.name, 
                           conf.ais_tcp_error.port, 
                           on_tcp_parse,
                           conf.ais_tcp_error.max_connections);        
         
     }
-    
-    srv_aidvm = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV].m_p);
-    srv_aidvm_error = (br_tcp_server_t*) (tcp_servers->items[AIS_SRV_ERROR].m_p);
     
     br_run();
 
@@ -167,7 +162,8 @@ end:
         mmpool_free(udp_clients);
         mmpool_free(udp_servers);
         mmpool_free(http_servers);
-        br_tcp_servers_close(tcp_servers);
+        br_tcp_server_close(&srv_aidvm);
+        br_tcp_server_close(&srv_aidvm_error);
         ais_filter_config_close(&conf);
     }    
 

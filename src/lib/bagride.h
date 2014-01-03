@@ -20,7 +20,8 @@ extern "C" {
    
 /**
  * tcp
- **/    
+ **/
+#define MM_MAX_SRV_NAME 256
 typedef struct br_tcp_server_s {
     int m_port;
     struct sockaddr_in m_socketaddr;
@@ -28,11 +29,9 @@ typedef struct br_tcp_server_s {
     br_buf_t m_write_buffer;    
     void* m_user_parse_cb;
     void* m_data;
-    const char* m_name;
+    char m_name[MM_MAX_SRV_NAME];
     mmpool_t* m_clients;
 } br_tcp_server_t;
-
-void br_tcp_servers_close(mmpool_t* srv_pool_);
 
 /**
  * parse incomming stream fragment
@@ -107,8 +106,10 @@ void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_);
 
 int br_udp_server_add(mmpool_t* serv_pool_, int port_, void* user_parse_cb_);
 
-int br_tcp_server_add(mmpool_t* serv_pool_, const char* name_, int port_, 
+int br_tcp_server_init(br_tcp_server_t* server_, const char* name_, int port_,
         void* user_parse_cb_, int max_connections_);
+
+void br_tcp_server_close(br_tcp_server_t* srv_);
 
 int br_http_server_add(mmpool_t*  serv_pool_, int port_, void* gen_response_cb_);
 
@@ -119,6 +120,7 @@ int br_http_server_add(mmpool_t*  serv_pool_, int port_, void* gen_response_cb_)
 void br_tsref_init();
 unsigned br_tsref_get();
 char* br_tsrefhex_get();
+#define MM_HEX_TIMESTAMP_LEN 8
 
 /**
  * common
