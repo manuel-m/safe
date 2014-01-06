@@ -54,26 +54,25 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
             && lat < conf.geofilter.y1 && lat > conf.geofilter.y2) {
 
         const char* hx = br_tsrefhex_get();
-        char* fwd8 = &f_->forward_sentence[MM_HEX_TIMESTAMP_LEN];
+        char* fwd_without_ts = &f_->forward_sentence[MM_HEX_TIMESTAMP_LEN];
+    
+        const size_t fwd_len_without_ts = s->n + 1;
+        const size_t fwd_with_ts_len = fwd_len_without_ts + MM_HEX_TIMESTAMP_LEN;
+        
     
         strncpy(f_->forward_sentence, hx, MM_HEX_TIMESTAMP_LEN + 1);
-        strncpy(fwd8, s->start, s->n);
-        f_->forward_sentence[s->n + MM_HEX_TIMESTAMP_LEN ] = '\n';
-        f_->forward_sentence[s->n + MM_HEX_TIMESTAMP_LEN + 1] = '\0';
+        strncpy(fwd_without_ts, s->start, s->n);
+        f_->forward_sentence[fwd_with_ts_len - 1] = '\n';
+        f_->forward_sentence[fwd_with_ts_len] = '\0';
     
-#ifdef MM_ULTRADEBUG
-        MM_INFO("%08" PRIu64 " type:%02d mmsi:%09u lat:%f lon:%f %s",
-                f_->sentences, ais->type, ais->mmsi, lat, lon, fwd8);
-#endif /* MM_ULTRADEBUG */
-
         /* for udp !aivdm forwarded without hex timestamp */
         if (0 < conf.ais_out_udp.n) {
-            br_udp_clients_send(udp_clients, fwd8);
+            br_udp_clients_send(udp_clients, fwd_without_ts, fwd_len_without_ts);
         }
         
         /* only if we have clients */
         if (0 == mmpool_taken_len(srv_out_filtered_ais.m_clients)) return 0;
-        br_tcp_write_string(&srv_out_filtered_ais,f_->forward_sentence, s->n + MM_HEX_TIMESTAMP_LEN + 1);
+        br_tcp_write_string(&srv_out_filtered_ais,f_->forward_sentence, fwd_with_ts_len);
     }
     return 0;
 }

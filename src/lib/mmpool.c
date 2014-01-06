@@ -23,10 +23,8 @@ mmpool_t* mmpool_new(unsigned min_, unsigned max_, unsigned step_,
       p->m_parent = pool;
       ++p;
     }
-    
     pool->m_alloc_len = min_;
     pool->m_taken_total = 0;
-    
     return pool;
     
 err:

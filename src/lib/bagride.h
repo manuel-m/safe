@@ -95,14 +95,14 @@ typedef struct br_http_client_s {
     uv_buf_t m_resbuf;
 } br_http_client_t;
 
-int br_tcp_write_string(br_tcp_server_t*, const char* , size_t );
+int br_tcp_write_string(br_tcp_server_t*, const char* , size_t len_);
 
 
 typedef int (*br_http_server_parser_cb)(br_http_client_t* cli_);
 
         
 int br_udp_client_add(mmpool_t* cli_pool_, const char* target_);
-void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_);
+void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_, size_t len_);
 
 int br_udp_server_init(br_udp_server_t* srv_, int port_, void* user_parse_cb_);
 

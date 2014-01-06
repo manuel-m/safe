@@ -292,11 +292,12 @@ int br_udp_client_add(mmpool_t* cli_pool_, const char* target_) {
     return 0;
 }
 
-void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
+void br_udp_client_send(br_udp_client_t* cli_, const char* str_, size_t len_) {
     uv_buf_t udp_sentence;
     uv_udp_send_t* send_req = (uv_udp_send_t*) calloc(1, sizeof (uv_udp_send_t));
     udp_sentence.base = (char*) strdup(str_);
-    udp_sentence.len = strlen(str_) + 1;
+//     udp_sentence.len = strlen(str_) + 1;
+    udp_sentence.len = len_;
     send_req->data = udp_sentence.base; /* no memory leak */
 
     int r = uv_udp_send(send_req, &cli_->m_handler, &udp_sentence, 1,
@@ -307,7 +308,7 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_) {
     }
 }
 
-void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
+void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_, size_t len_) {
 
     mmpool_iter_t iter = {
         .m_index = 0,
@@ -317,7 +318,7 @@ void br_udp_clients_send(mmpool_t* cli_pool_, const char* str_) {
     br_udp_client_t* pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
 
     while (pclient) {
-        br_udp_client_send(pclient, str_);
+        br_udp_client_send(pclient, str_, len_);
         pclient = (br_udp_client_t*) mmpool_iter_next(&iter);
     }
 }
