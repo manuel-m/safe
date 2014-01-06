@@ -5,10 +5,10 @@
 static int on_ais_decoded(struct sad_filter_s * filter_){
     
     printf("[ OK ] %08" PRIu64 " type:%02d mmsi:%09u  %s", 
-            filter_->sentences, 
+            filter_->nb_mess, 
             filter_->ais.type, 
             filter_->ais.mmsi,             
-            filter_->sentence->start);
+            filter_->mess->start);
     return 0;
 }
 

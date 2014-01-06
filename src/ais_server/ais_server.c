@@ -86,7 +86,7 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
     if (0 > buf->len) return -1;
 
-    br_tcp_write_string(&srv_out_ships, buf->base, buf->len);
+    br_out_tcp_write_string(&srv_out_ships, buf->base, buf->len);
 
     return 0;
 }

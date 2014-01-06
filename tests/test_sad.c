@@ -42,7 +42,7 @@ static char* tests_result[] = {
 static int on_ais_decoded(struct sad_filter_s * filter_){
     static int count = 0;
     char buf[4096] = {0};
-    memcpy(buf,filter_->sentence->start,filter_->sentence->n );
+    memcpy(buf,filter_->mess->start,filter_->mess->n );
     
     char bufjson[4096] = {0};
     json_aivdm_dump(&filter_->ais, NULL, 0, bufjson, sizeof(bufjson));

@@ -1,4 +1,4 @@
--- 'mss_server' API definition
+-- 'ais_server' API definition
 
 -- technical definition
 mmapi_m = {

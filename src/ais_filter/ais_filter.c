@@ -20,10 +20,10 @@ static struct ais_filter_config_s conf;
 
 static mmpool_t* udp_clients = NULL;
 
-static br_udp_server_t  srv_in_raw_ais;
+static br_udp_server_t  srv_in_udp_raw_ais;
 static br_http_server_t srv_out_http_stats;
-static br_tcp_server_t  srv_out_filtered_ais;
-static br_tcp_server_t  srv_out_filtered_ais_error;
+static br_tcp_server_t  srv_out_tcp_filtered_ais;
+static br_tcp_server_t  srv_out_tcp_filtered_ais_error;
 
 static void user_info_dump(void) {
     printf(HELP_USAGE "\n");
@@ -34,7 +34,7 @@ static int on_stats_response(br_http_client_t* cli_) {
     return 0;
 }
 
-static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t* pserver_) {
+static int on_udp_parse(ssize_t nread_, const br_buf_t* inbuf_, br_udp_server_t* pserver_) {
     (void) pserver_;
     sad_decode_multiline(&filter, inbuf_->base, nread_);
     return 0;
@@ -43,7 +43,7 @@ static int on_udp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_udp_server_t*
 static int on_ais_decoded(struct sad_filter_s * f_) {
 
     struct ais_t * ais = &f_->ais;
-    sub0_substring_t* s = f_->sentence;
+    sub0_substring_t* s = f_->mess;
 
     if (3 < ais->type ) return 0;
 
@@ -54,16 +54,14 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
             && lat < conf.geofilter.y1 && lat > conf.geofilter.y2) {
 
         const char* hx = br_tsrefhex_get();
-        char* fwd_without_ts = &f_->forward_sentence[MM_HEX_TIMESTAMP_LEN];
+        char* fwd_without_ts = &f_->fwd_mess[MM_HEX_TIMESTAMP_LEN];
     
         const size_t fwd_len_without_ts = s->n + 1;
         const size_t fwd_with_ts_len = fwd_len_without_ts + MM_HEX_TIMESTAMP_LEN;
-        
-    
-        strncpy(f_->forward_sentence, hx, MM_HEX_TIMESTAMP_LEN + 1);
+        strncpy(f_->fwd_mess, hx, MM_HEX_TIMESTAMP_LEN + 1);
         strncpy(fwd_without_ts, s->start, s->n);
-        f_->forward_sentence[fwd_with_ts_len - 1] = '\n';
-        f_->forward_sentence[fwd_with_ts_len] = '\0';
+        f_->fwd_mess[fwd_with_ts_len - 1] = '\n';
+        f_->fwd_mess[fwd_with_ts_len] = '\0';
     
         /* for udp !aivdm forwarded without hex timestamp */
         if (0 < conf.ais_out_udp.n) {
@@ -71,23 +69,23 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
         }
         
         /* only if we have clients */
-        if (0 == mmpool_taken_len(srv_out_filtered_ais.m_clients)) return 0;
-        br_tcp_write_string(&srv_out_filtered_ais,f_->forward_sentence, fwd_with_ts_len);
+        if (0 == mmpool_taken_len(srv_out_tcp_filtered_ais.m_clients)) return 0;
+        br_out_tcp_write_string(&srv_out_tcp_filtered_ais,f_->fwd_mess, fwd_with_ts_len);
     }
     return 0;
 }
 
 static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t* pserver_) {
-    MM_INFO("tcp (%d)[%d] %s data (%p)\n", pserver_->m_port, (int) nread_, inbuf_->base,
-            pserver_->m_data);
+    MM_INFO("tcp (%d)[%d] %s data (%p)\n", pserver_->m_port, (int) nread_, 
+            inbuf_->base, pserver_->m_data);
     if (0 > asprintf(&pserver_->m_write_buffer.base, "<<%s>>", inbuf_->base)) return -1;
     pserver_->m_write_buffer.len = strlen(pserver_->m_write_buffer.base);
     return 0;
 }
 
 static void ais_decode_error(const char* errm_){
-  if (0 == mmpool_taken_len(srv_out_filtered_ais_error.m_clients)) return;
-  br_tcp_write_string(&srv_out_filtered_ais_error, errm_, strlen(errm_));
+  if (0 == mmpool_taken_len(srv_out_tcp_filtered_ais_error.m_clients)) return;
+  br_out_tcp_write_string(&srv_out_tcp_filtered_ais_error, errm_, strlen(errm_));
 }
 
 int main(int argc, char **argv) {
@@ -121,19 +119,19 @@ int main(int argc, char **argv) {
     if (sad_filter_init(&filter, on_ais_decoded, NULL,ais_decode_error)) MM_GERR;
 
     /* udp server  */
-    br_udp_server_init(&srv_in_raw_ais, conf.ais_udp_in_port, on_udp_parse);
+    br_udp_server_init(&srv_in_udp_raw_ais, conf.ais_udp_in_port, on_udp_parse);
     
     /* http server  */
     br_http_server_init(&srv_out_http_stats, conf.admin_http_port, on_stats_response);
     
     /* tcp servers  */
-    br_tcp_server_init(&srv_out_filtered_ais,
+    br_tcp_server_init(&srv_out_tcp_filtered_ais,
                        conf.ais_tcp_server.name, 
                        conf.ais_tcp_server.port, 
                        on_tcp_parse,
                        conf.ais_tcp_server.max_connections);
         
-    br_tcp_server_init(&srv_out_filtered_ais_error,
+    br_tcp_server_init(&srv_out_tcp_filtered_ais_error,
                        conf.ais_tcp_error.name, 
                        conf.ais_tcp_error.port, 
                        on_tcp_parse,
@@ -148,8 +146,8 @@ end:
     /* cleaning */
     {
         mmpool_free(udp_clients);
-        br_tcp_server_close(&srv_out_filtered_ais);
-        br_tcp_server_close(&srv_out_filtered_ais_error);
+        br_tcp_server_close(&srv_out_tcp_filtered_ais);
+        br_tcp_server_close(&srv_out_tcp_filtered_ais_error);
         ais_filter_config_close(&conf);
     }    
 

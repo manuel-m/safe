@@ -80,7 +80,23 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
     free(read_buf_->base);
 }
 
-int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_) {
+static void on_in_tcp_client_close(uv_handle_t* handle) {
+    (void) handle;
+}
+
+static void on_in_tcp_client_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* buf_) {
+    if (nread_ >= 0) {
+        br_tcp_client_t* client = (br_tcp_client_t*) stream_->data;
+        br_tcp_client_parser_cb user_cb = (br_tcp_client_parser_cb) client->m_user_parse_cb;
+        MM_ASSERT(0 == user_cb(nread_, buf_, client));
+
+    } else {
+        uv_close((uv_handle_t*) stream_, on_in_tcp_client_close);
+    }
+    free(buf_->base);
+}
+
+int br_out_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_) {
 
     mmpool_iter_t iter = {
         .m_index = 0,
@@ -101,7 +117,7 @@ int br_tcp_write_string(br_tcp_server_t* server_, const char* str_, size_t len_)
     return 0;
 }
 
-static void on_udp_recv(uv_udp_t* stream_, ssize_t nread_, const uv_buf_t* read_buff_,
+static void on_in_udp_recv(uv_udp_t* stream_, ssize_t nread_, const uv_buf_t* read_buff_,
         const struct sockaddr* addr_, unsigned flags_) {
 
     (void) addr_;
@@ -122,7 +138,38 @@ static void on_udp_send(uv_udp_send_t* req_, int status) {
     free(req_);
 }
 
-static void server_on_connect(uv_stream_t* server_handle_, int status_) {
+static void on_tcp_client_connect(uv_connect_t* connection, int status) {
+    (void) status;
+    uv_stream_t* stream = connection->handle;
+    uv_read_start(stream, on_alloc_buffer, on_in_tcp_client_read);
+}
+
+int br_tcp_client_init(br_tcp_client_t* client_, const char* name_,
+        const char* addr_, int port_, void* user_parse_cb_) {
+    strncpy(client_->m_name, name_, sizeof (client_->m_name));
+    client_->m_port = port_;
+    client_->m_user_parse_cb = user_parse_cb_;
+    strncpy(client_->m_addr, addr_, sizeof (client_->m_addr));
+    client_->m_handler.data = client_;
+
+    uv_tcp_init(uv_default_loop(), &client_->m_handler);
+
+    int r = uv_ip4_addr(addr_, port_, &client_->m_socketaddr);
+    if (r != 0) {
+        MM_ERR("invalid address %s:", addr_);
+        return -1;
+    }
+    r = uv_tcp_connect(&client_->m_connect, &client_->m_handler,
+            (const struct sockaddr*) &client_->m_socketaddr,
+            on_tcp_client_connect);
+    if (r != 0) {
+        MM_ERR("failed connect %s:%d", addr_, port_);
+        return -1;
+    }
+    return 0;
+}
+
+static void on_in_server_connect(uv_stream_t* server_handle_, int status_) {
 
     MM_ASSERT(status_ >= 0);
     br_tcp_server_t* server = (br_tcp_server_t*) server_handle_->data;
@@ -179,7 +226,7 @@ int br_udp_server_init(br_udp_server_t* srv_, int port_, void* user_parse_cb_) {
     srv_->m_handler.data = srv_;
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", srv_->m_port, &srv_->m_socketaddr));
     MM_ASSERT(0 == uv_udp_bind(&srv_->m_handler, (const struct sockaddr*) &srv_->m_socketaddr, 0));
-    MM_ASSERT(0 == uv_udp_recv_start(&srv_->m_handler, on_alloc_buffer, on_udp_recv));
+    MM_ASSERT(0 == uv_udp_recv_start(&srv_->m_handler, on_alloc_buffer, on_in_udp_recv));
     return 0;
 }
 
@@ -199,7 +246,7 @@ int br_tcp_server_init(br_tcp_server_t* server_, const char* name_, int port_,
 
     MM_ASSERT(0 == uv_ip4_addr("0.0.0.0", server_->m_port, &server_->m_socketaddr));
     MM_ASSERT(0 == uv_tcp_bind(&server_->m_server_handler, (const struct sockaddr*) &server_->m_socketaddr));
-    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server_->m_server_handler, max_connections_, server_on_connect));
+    MM_ASSERT(0 == uv_listen((uv_stream_t*) & server_->m_server_handler, max_connections_, on_in_server_connect));
     return 0;
 }
 
@@ -296,7 +343,6 @@ void br_udp_client_send(br_udp_client_t* cli_, const char* str_, size_t len_) {
     uv_buf_t udp_sentence;
     uv_udp_send_t* send_req = (uv_udp_send_t*) calloc(1, sizeof (uv_udp_send_t));
     udp_sentence.base = (char*) strdup(str_);
-//     udp_sentence.len = strlen(str_) + 1;
     udp_sentence.len = len_;
     send_req->data = udp_sentence.base; /* no memory leak */
 
@@ -426,7 +472,7 @@ static void on_tsref_update(uv_timer_t* handle, int status){
     (void)handle;
     (void)status;
     __brtsref = (unsigned)time(NULL);
-    snprintf(__brtsrefhex,8 + 1,"%x",__brtsref);
+    snprintf(__brtsrefhex,MM_HEX_TIMESTAMP_LEN + 1,"%x",__brtsref);
 }
 
 void br_tsref_init(unsigned refresh_period_){

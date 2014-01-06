@@ -1674,7 +1674,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
         
         /* level 1: incoherent size ... garbage */
         if (NMEA_MIN > sentence->n || NMEA_MAX < sentence->n) continue;
-        ++filter_->sentences;
+        ++filter_->nb_mess;
 
         /* level 2: strip pre-garbage char */
         size_t s2_n = sentence->n;
@@ -1784,7 +1784,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
         
         /* do not decode frags */
         if (1 != filter_->frag_cur.seq_len) {
-            ++filter_->frags;
+            ++filter_->nb_frags;
             goto endline;
         }
         
@@ -2047,7 +2047,7 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 
 endline:
         if (mmerr) {
-            ++filter_->errors;
+            ++filter_->nb_errors;
             
             if(filter_->f_error_cb) filter_->f_error_cb(mmerr);
             free(mmerr);
@@ -2056,14 +2056,14 @@ endline:
           
             
             /* drop duplicates */
-            if (0 == strncmp(filter_->last_sentence, sentence->start, sentence->n)) {
-              ++filter_->duplicates;
+            if (0 == strncmp(filter_->last_mess, sentence->start, sentence->n)) {
+              ++filter_->nb_duplicates;
               
             }else
             {
-                strncpy(filter_->last_sentence, sentence->start, sentence->n);
-                filter_->last_sentence[sentence->n + 1] = '0';
-                filter_->sentence = sentence;
+                strncpy(filter_->last_mess, sentence->start, sentence->n);
+                filter_->last_mess[sentence->n + 1] = '0';
+                filter_->mess = sentence;
                 filter_->f_ais_cb(filter_);
             }
         }
@@ -2259,10 +2259,10 @@ int sad_stats_string(char ** response_string, sad_filter_t* filter) {
 
 #define MF_FILTER(TYPE) filter->types[TYPE] 
     return asprintf(response_string, MF_FMT0,
-            filter->sentences,
-            filter->frags,
-            filter->errors,
-            filter->duplicates,
+            filter->nb_mess,
+            filter->nb_frags,
+            filter->nb_errors,
+            filter->nb_duplicates,
             MF_FILTER(0), MF_FILTER(1), MF_FILTER(2), MF_FILTER(3),
             MF_FILTER(4), MF_FILTER(5), MF_FILTER(6), MF_FILTER(7),
             MF_FILTER(8), MF_FILTER(9),

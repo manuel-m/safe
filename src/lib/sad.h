@@ -1263,17 +1263,17 @@ extern "C" {
         int (*f_ais_cb)(struct sad_filter_s*);
         void (*f_error_cb)(const char*);
         void* userdata;
-        sub0_substring_t* sentence;
+        sub0_substring_t* mess;
         uint8_t state;
         sad_frag_ctx_t frag_cur;
         sad_frag_ctx_t frag_prev;
-        uint64_t sentences;
-        uint64_t frags;
-        uint64_t errors;
-        uint64_t duplicates;
+        uint64_t nb_mess;
+        uint64_t nb_frags;
+        uint64_t nb_errors;
+        uint64_t nb_duplicates;
         uint64_t types[AIVDM_MESSAGES_TYPE + 1];
-        char last_sentence[1024];
-        char forward_sentence[1024];
+        char last_mess[1024];
+        char fwd_mess[1024];
 
     } sad_filter_t;
 

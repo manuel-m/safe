@@ -31,15 +31,14 @@ in course
 =========
 
 - smarter config code generator (multilevel,less code)
-- NMEA or timestamped NMEA output
 
 TODO
 =====
 
-- tcp client tools
+- tcp client tools name resolution
 - vessels history 
 - vessels history FT
 - default config display
 - vessels server
-- http server using leafjs
+- http server 
 
