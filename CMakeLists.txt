@@ -20,8 +20,12 @@ macro_define_cflags()
 include(MacroUseUv)
 macro_use_uv()
 
+#deprecated ...
 include(MacroUseLua)
 macro_use_lua()
+
+include(MacroUseLibConfig)
+macro_use_libconfig()
 
 set(DIST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 file(MAKE_DIRECTORY ${DIST_DIR})
@@ -64,8 +68,9 @@ add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}.c  ${LIBMM_SRC}/sad.c ${LI
 
 #ais config
 add_executable (${AIS_CONFIG_EXE}  src/${AIS_CONFIG}/${AIS_CONFIG}.c )
-target_link_libraries (${AIS_CONFIG_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
+target_link_libraries (${AIS_CONFIG_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} ${LIBCONFIG_A})
 target_link_libraries (${AIS_CONFIG_EXE} -lpthread -lrt -lm)
+
 
 
 

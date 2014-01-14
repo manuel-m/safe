@@ -1,148 +1,211 @@
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "libconfig.h"
 
 #include "mmtrace.h"
 
-struct ais_conf_s {
-    int ais_udp_in_port;
+typedef struct {
+    const char* name;
+    double x1;
+    double y1;
+    double x2;
+    double y2;
+} geofilter_t;
+
+typedef struct {
+    const char* addr;
+    int port;
+} out_ais_udp_t;
+
+#define MM_DECL_VECTOR(TYPE)                                                   \
+struct {                                                                       \
+  unsigned n;                                                                  \
+  TYPE * items;}                                                               
+  
+#define MM_FREE_VECTOR(NAME)                                                   \
+do{                                                                            \
+  if((NAME).items) free((NAME).items);                                         \
+} while(0);
+
+#define MM_ALLOC_VECTOR(NAME,TYPE,LEN)                                         \
+do{                                                                            \
+  (NAME).n = (LEN);                                                            \
+  (NAME).items = calloc((LEN),sizeof(TYPE));                                   \
+} while(0);
+
+
+static struct {
+    int io_admin_http_port;
+    int in_ais_udp_port;
+
     struct {
-         int port;
-         int max_connections;
-         char* name;
-         struct {
-            char* name_l2;
-            int int_l2;
-            struct {
-              char* name_l3;
-              int int_l3;
-            } l3; 
-         } l2;
-    } ais_tcp_server;
-};
+        const char* name;
+        int port;
+        int max_connections;
+    } out_ais_tcp_server;
+
+    struct {
+        const char* name;
+        int port;
+        int max_connections;
+    } out_ais_tcp_error;
+
+    MM_DECL_VECTOR(geofilter_t) geofilters;
+    MM_DECL_VECTOR(out_ais_udp_t) out_ais_udp_streams;
+
+} values;
 
 
-static int mm_conf_load(struct ais_conf_s* cfg_,const char* f_)
-{
-    lua_State *L = luaL_newstate();
-    luaopen_base(L);
-    if (luaL_loadfile(L, f_) || lua_pcall(L, 0, 0, 0)) {
-        MM_ERR("cannot run configuration file: %s",f_);
-        return 1;
+#define MM_CFG_GET_INT(CFG,PATH,VALUE)                                         \
+do {                                                                           \
+  if(CONFIG_TRUE!=config_lookup_int(&(CFG),#PATH, &(VALUE.PATH) ))             \
+  {                                                                            \
+    MM_ERR("invalid %s in configuration file",#PATH );                         \
+    goto err;                                                                  \
+  }                                                                            \
+}                                                                              \
+while(0);
+
+#define MM_CFG_GET_STR(CFG,PATH,VALUE)                                         \
+do {                                                                           \
+  if(CONFIG_TRUE!=config_lookup_string(&(CFG),#PATH, &(VALUE.PATH) ))          \
+  {                                                                            \
+    MM_ERR("invalid %s in configuration file",#PATH );                         \
+    goto err;                                                                  \
+  }                                                                            \
+}                                                                              \
+while(0);
+
+#define MM_CFGNODE_GET_STR(NODE,PATH,VALUE)                                    \
+do {                                                                           \
+  if(CONFIG_TRUE!=config_setting_lookup_string((NODE),#PATH, &((VALUE)->PATH)))\
+  {                                                                            \
+    MM_ERR("invalid %s in configuration file",#PATH );                         \
+    goto err;                                                                  \
+  }                                                                            \
+}                                                                              \
+while(0);
+
+#define MM_CFGNODE_GET_DOUBLE(NODE,PATH,VALUE)                                 \
+do {                                                                           \
+  if(CONFIG_TRUE!=config_setting_lookup_float((NODE),#PATH, &((VALUE)->PATH))) \
+  {                                                                            \
+    MM_ERR("invalid %s in configuration file",#PATH );                         \
+    goto err;                                                                  \
+  }                                                                            \
+}                                                                              \
+while(0);
+
+#define MM_CFGNODE_GET_INT(NODE,PATH,VALUE)                                    \
+do {                                                                           \
+  if(CONFIG_TRUE!=config_setting_lookup_int((NODE),#PATH, &((VALUE)->PATH)))   \
+  {                                                                            \
+    MM_ERR("invalid %s in configuration file",#PATH );                         \
+    goto err;                                                                  \
+  }                                                                            \
+}                                                                              \
+while(0);
+
+int main(int argc, char **argv) {
+
+    int r = 0;
+    config_t cfg;
+    memset(&values,0,sizeof(values));
+
+    if (2 != argc) {
+        MM_ERR("usage: %s /path/to/config/file", argv[0]);
+        return -1;
     }
-    /* ais_udp_in_port */
+    config_init(&cfg);
+
+    if (!config_read_file(&cfg, argv[1])) {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
+                config_error_line(&cfg), config_error_text(&cfg));
+        goto err;
+    }
+
+    /* io_admin_http_port */
+    MM_CFG_GET_INT(cfg, io_admin_http_port, values);
+
+    /* in_ais_udp_port */
+    MM_CFG_GET_INT(cfg, in_ais_udp_port, values);
+
+    /* out_ais_tcp_server */
+    MM_CFG_GET_STR(cfg, out_ais_tcp_server.name, values);
+    MM_CFG_GET_INT(cfg, out_ais_tcp_server.port, values);
+    MM_CFG_GET_INT(cfg, out_ais_tcp_server.max_connections, values);
+
+    /* out_ais_tcp_error */
+    MM_CFG_GET_STR(cfg, out_ais_tcp_error.name, values);
+    MM_CFG_GET_INT(cfg, out_ais_tcp_error.port, values);
+    MM_CFG_GET_INT(cfg, out_ais_tcp_error.max_connections, values);
+
+    /* geofilters */
     {
-        lua_getglobal(L,"ais_udp_in_port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_udp_in_port should be a number");
-            return -1;
+        config_setting_t *list = config_lookup(&cfg, "geofilter");
+        if (NULL == list) {
+            MM_ERR("Missing geofilters in configuration file");
+            goto err;
         }
-        cfg_->ais_udp_in_port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
+        MM_ALLOC_VECTOR(values.geofilters, geofilter_t,config_setting_length(list));
+        
+        MM_INFO("geofilter len:%d",values.geofilters.n);
+
+        geofilter_t* p;
+        int i;
+        
+        for (i = 0, p = values.geofilters.items; i < values.geofilters.n; ++i, p++) {
+            config_setting_t *setting = config_setting_get_elem(list, i);
+            
+            MM_CFGNODE_GET_STR(setting,name,p);  
+
+            MM_INFO("geofilter[%d].name == %s",i, p->name);
+            
+            MM_CFGNODE_GET_DOUBLE(setting,x1,p);
+            MM_CFGNODE_GET_DOUBLE(setting,y1,p);
+            MM_CFGNODE_GET_DOUBLE(setting,x2,p);
+            MM_CFGNODE_GET_DOUBLE(setting,y2,p);            
+        }
     }
-    /* ais_tcp_server */
+    
+    /* out_ais_udp */
     {
-        lua_getglobal(L,"ais_tcp_server");
-        if (!lua_istable(L, -1)) {
-            MM_ERR("ais_tcp_server is not a table");
-            return -1;
+        config_setting_t *list = config_lookup(&cfg, "out_ais_udp");
+        if (NULL == list) {
+            MM_ERR("Missing out_ais_udp in configuration file");
+            goto err;
         }
-        lua_getfield(L, -1, "port");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_tcp_server.port should be a number");
-            return -1;
+        MM_ALLOC_VECTOR(values.out_ais_udp_streams, out_ais_udp_t,config_setting_length(list));
+        
+        MM_INFO("geofilter len:%d",values.geofilters.n);
+
+        out_ais_udp_t* p;
+        int i;
+        
+        for (i = 0, p = values.out_ais_udp_streams.items; i < values.out_ais_udp_streams.n; ++i, p++) {
+            config_setting_t *setting = config_setting_get_elem(list, i);
+            
+            MM_CFGNODE_GET_STR(setting,addr,p);
+            MM_INFO("out_ais_udp[%d].addr == %s",i, p->addr);
+            MM_CFGNODE_GET_INT(setting,port,p);
+
         }
-        cfg_->ais_tcp_server.port = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "max_connections");
-        if (!lua_isnumber(L, -1)) {
-            MM_ERR("ais_tcp_server.max_connections should be a number");
-            return -1;
-        }
-        cfg_->ais_tcp_server.max_connections = (int) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "name");
-        if (!lua_isstring(L, -1)) {
-            MM_ERR("ais_tcp_server.name should be a string");
-            return -1;
-        }
-        const char* s = lua_tostring(L, -1);
-        cfg_->ais_tcp_server.name = strdup(s);
-        lua_pop(L, 1);
+    }    
+    
+    
+end:
+    config_destroy(&cfg);
+    MM_FREE_VECTOR(values.geofilters);
+    MM_FREE_VECTOR(values.out_ais_udp_streams);
+    return r;
 
-        lua_getfield(L, -1, "l2");
-        if (!lua_istable(L, -1)) {
-          MM_ERR("l2 should be a table, exit");
-          return -1;
-        }
-          lua_getfield(L, -1, "name_l2");
-          if (!lua_isstring(L, -1)) {
-              MM_ERR("ais_tcp_server.l2.name_l2 should be a string");
-              return -1;
-          }
-          cfg_->ais_tcp_server.l2.name_l2 = strdup(lua_tostring(L, -1));
-          lua_pop(L, 1);
-
-          lua_getfield(L, -1, "int_l2");
-          if (!lua_isnumber(L, -1)) {
-              MM_ERR("ais_tcp_server.l2.int_l2. should be a number");
-              return -1;
-          }
-          cfg_->ais_tcp_server.l2.int_l2 = (int) lua_tonumber(L, -1);
-          lua_pop(L,1);
-
-          lua_getfield(L, -1, "l3");
-          if (!lua_istable(L, -1)) {
-            MM_ERR("l3 should be a table, exit");
-            return -1;
-          }
-
-          lua_getfield(L, -1, "name_l3");
-          if (!lua_isstring(L, -1)) {
-              MM_ERR("ais_tcp_server.l2.l3.name_l3 should be a string");
-              return -1; 
-          }
-          cfg_->ais_tcp_server.l2.l3.name_l3 = strdup(lua_tostring(L, -1));
-          lua_pop(L, 1); 
-
-          lua_getfield(L, -1, "int_l3");
-          if (!lua_isnumber(L, -1)) {
-              MM_ERR("ais_tcp_server.l2.l3.int_l3. should be a number");
-              return -1; 
-          }
-          cfg_->ais_tcp_server.l2.l3.int_l3 = (int) lua_tonumber(L, -1);
-          lua_pop(L,1);         
-
-          lua_pop(L,1); /* end l3 */
-        lua_pop(L,1); /* end l2 */
-
-    }
-
-    lua_close(L);
-    return 0;
+err:
+    r = -1;
+    goto end;
+    
+    
 }
-
-int main(int argc, char** argv){
- 
-  MM_INFO("start %s", argv[0]);
-
-  static struct ais_conf_s conf;
-  if( 2 > argc ){
-    MM_ERR("usage: %s /path/to/config",argv[0]);
-    return -1;
-  }
-
-  if (0 > mm_conf_load(&conf, argv[1])) {
-    MM_ERR("Error when loading conf");
-    return -1;
-  }
-  MM_INFO("end %s", argv[0]);
-  return 0;
-}
-
-
 
 

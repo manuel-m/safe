@@ -2,6 +2,7 @@
 
 LIBUV_ID=libuv_131201
 LIBLUA_ID=lua-5.2.2
+LIBCONFIG_ID=libconfig-1.4.9
 
 ROOT_PWD=$(pwd)
 
@@ -30,7 +31,9 @@ else
   
 fi
 
+#libconfig
+cd ${ROOT_PWD}
+tar xvfz libconfig-1.4.9.tar.gz 
+cd ${LIBCONFIG_ID}
+./configure && make
 
-
-
-# 
