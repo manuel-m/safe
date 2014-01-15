@@ -15,7 +15,7 @@ extern "C" {
 
 #define MM_CFG_GET_INT(CFG,PATH,VALUE)                                         \
 do {                                                                           \
-  if(CONFIG_TRUE!=config_lookup_int(&(CFG),#PATH, &(VALUE.PATH) ))             \
+  if(CONFIG_TRUE!=config_lookup_int((CFG),#PATH, &(VALUE.PATH) ))             \
   {                                                                            \
     MM_ERR("invalid %s in configuration file",#PATH );                         \
     goto err;                                                                  \
@@ -25,7 +25,7 @@ while(0);
 
 #define MM_CFG_GET_STR(CFG,PATH,VALUE)                                         \
 do {                                                                           \
-  if(CONFIG_TRUE!=config_lookup_string(&(CFG),#PATH, &(VALUE.PATH) ))          \
+  if(CONFIG_TRUE!=config_lookup_string((CFG),#PATH, &(VALUE.PATH) ))          \
   {                                                                            \
     MM_ERR("invalid %s in configuration file",#PATH );                         \
     goto err;                                                                  \

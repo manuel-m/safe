@@ -1,39 +1,42 @@
--- configuration file for program 'mss_filter'
-
--- admin_http_port
--- watch -n 0,05 -t curl -s localhost:9997
-admin_http_port = 9997
-
--- ais_udp_in_port
-ais_udp_in_port = 9990
-
--- ais_tcp_server
-ais_tcp_server = { 
-                     name            = "ais_server",
-                     port            = 9993,
-                     max_connections = 32
-}
-
--- ais_tcp_server
-ais_tcp_error = { 
-                     name            = "ais_server_error",
-                     port            = 9994,
-                     max_connections = 32
-}
 
 
+// admin_http_port
+io_admin_http_port = 9997;
+in_ais_udp_port = 9990;
 
--- geographical filter
-geofilter = { 
-               x1 = -16.0, 
-               y1 = 45.0, 
-               x2 = 9.0, 
-               y2 = 36.0 
-            }
+// out_ais_tcp_server
+out_ais_tcp_server = { 
+                      name            = "out_ais_tcp_server";
+                      port            = 9993;
+                      max_connections = 32; }
 
---  ais output is not mandatory
- ais_out_udp = {  
-                 "192.168.200.13:9993",
-                 "l18:9993",
-                 "localhost:9993",
-               }
+// out_ais_tcp_error for debug
+out_ais_tcp_error = { 
+                     name            = "out_ais_tcp_error";
+                     port            = 9994;
+                     max_connections = 32; }
+
+// geographical filter
+geofilter = ( { 
+               name = "Europe";
+               x1 = -16.0;
+               y1 = 45.0;
+               x2 = 9.0;
+               y2 = 36.0; },
+              { 
+               name = "Brazil";
+               x1 = 12.0;
+               y1 = -76.0;
+               x2 = -38.0;
+               y2 = -30.0; } );  
+
+// out udp channels             
+out_ais_udp = ( {  
+                  addr = "192.168.200.13";
+                  port = 9993; },
+                 {
+                  addr = "l18",
+                  port = 9993; },
+                 {
+                  addr = "localhost";
+                  port = 9993; } );

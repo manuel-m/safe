@@ -313,28 +313,30 @@ int br_udp_client_register(mmpool_item_t* cli_pool_item_) {
     return 0;
 }
 
-int br_udp_client_add(mmpool_t* cli_pool_, const char* target_) {
+int br_udp_client_add(mmpool_t* cli_pool_, const char* addr_,int port_) {
 
     mmpool_item_t* pool_item = mmpool_take(cli_pool_);
     if (NULL == pool_item) return -1;
     br_udp_client_t* cli = (br_udp_client_t*) pool_item->m_p;
 
-    sub0_line_t line;
-    sub0_substring_t* sub = NULL;
-    sub0_line_prepare(target_, strlen(target_), ':', &line);
+//     sub0_line_t line;
+//     sub0_substring_t* sub = NULL;
+//     sub0_line_prepare(target_, strlen(target_), ':', &line);
 
-    /* 1st field:addr */
-    sub = sub0_line_next_substring(&line);
-    if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
-    if (BR_MAX_ADDR_SIZE < sub->n) return -1;
+//     /* 1st field:addr */
+//     sub = sub0_line_next_substring(&line);
+//     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
+//     if (BR_MAX_ADDR_SIZE < sub->n) return -1;
 
-    memcpy(cli->m_addr, sub->start, sub->n);
-    cli->m_addr[sub->n] = '\0';
+//     memcpy(cli->m_addr, sub->start, sub->n);
+//     cli->m_addr[sub->n] = '\0';
+    strcpy(cli->m_addr, addr_);
 
-    /* 2nd field:port */
-    sub = sub0_line_next_substring(&line);
-    if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
-    cli->m_port = atoi(sub->start);
+//     /* 2nd field:port */
+//     sub = sub0_line_next_substring(&line);
+//     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
+//     cli->m_port = atoi(sub->start);
+    cli->m_port = port_;
     if (0 > br_udp_client_register(pool_item)) return -1;
     return 0;
 }

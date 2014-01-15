@@ -72,11 +72,9 @@ target_link_libraries (${AIS_CONFIG_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} ${LIBCONFIG
 target_link_libraries (${AIS_CONFIG_EXE} -lpthread -lrt -lm)
 
 
-
-
 #ais filter            
-add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}_config.c src/${AIS_FILTER}/${AIS_FILTER}.c )
-target_link_libraries (${AIS_FILTER_EXE} ${LIBMM_A} ${UV_A} ${LUA_A} )
+add_executable (${AIS_FILTER_EXE} src/${AIS_FILTER}/${AIS_FILTER}.c )
+target_link_libraries (${AIS_FILTER_EXE} ${LIBMM_A} ${UV_A} ${LIBCONFIG_A} )
 target_link_libraries (${AIS_FILTER_EXE} -lpthread -lrt -lm)
 
 #ais server            
