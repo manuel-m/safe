@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libconfig.h"
 
+#include "mmconfig.h"
 #include "mmtrace.h"
+#include "mmvector.h"
 
 typedef struct {
     const char* name;
@@ -19,21 +20,6 @@ typedef struct {
     int port;
 } out_ais_udp_t;
 
-#define MM_DECL_VECTOR(TYPE)                                                   \
-struct {                                                                       \
-  unsigned n;                                                                  \
-  TYPE * items;}                                                               
-  
-#define MM_FREE_VECTOR(NAME)                                                   \
-do{                                                                            \
-  if((NAME).items) free((NAME).items);                                         \
-} while(0);
-
-#define MM_ALLOC_VECTOR(NAME,TYPE,LEN)                                         \
-do{                                                                            \
-  (NAME).n = (LEN);                                                            \
-  (NAME).items = calloc((LEN),sizeof(TYPE));                                   \
-} while(0);
 
 
 static struct {
@@ -58,55 +44,6 @@ static struct {
 } values;
 
 
-#define MM_CFG_GET_INT(CFG,PATH,VALUE)                                         \
-do {                                                                           \
-  if(CONFIG_TRUE!=config_lookup_int(&(CFG),#PATH, &(VALUE.PATH) ))             \
-  {                                                                            \
-    MM_ERR("invalid %s in configuration file",#PATH );                         \
-    goto err;                                                                  \
-  }                                                                            \
-}                                                                              \
-while(0);
-
-#define MM_CFG_GET_STR(CFG,PATH,VALUE)                                         \
-do {                                                                           \
-  if(CONFIG_TRUE!=config_lookup_string(&(CFG),#PATH, &(VALUE.PATH) ))          \
-  {                                                                            \
-    MM_ERR("invalid %s in configuration file",#PATH );                         \
-    goto err;                                                                  \
-  }                                                                            \
-}                                                                              \
-while(0);
-
-#define MM_CFGNODE_GET_STR(NODE,PATH,VALUE)                                    \
-do {                                                                           \
-  if(CONFIG_TRUE!=config_setting_lookup_string((NODE),#PATH, &((VALUE)->PATH)))\
-  {                                                                            \
-    MM_ERR("invalid %s in configuration file",#PATH );                         \
-    goto err;                                                                  \
-  }                                                                            \
-}                                                                              \
-while(0);
-
-#define MM_CFGNODE_GET_DOUBLE(NODE,PATH,VALUE)                                 \
-do {                                                                           \
-  if(CONFIG_TRUE!=config_setting_lookup_float((NODE),#PATH, &((VALUE)->PATH))) \
-  {                                                                            \
-    MM_ERR("invalid %s in configuration file",#PATH );                         \
-    goto err;                                                                  \
-  }                                                                            \
-}                                                                              \
-while(0);
-
-#define MM_CFGNODE_GET_INT(NODE,PATH,VALUE)                                    \
-do {                                                                           \
-  if(CONFIG_TRUE!=config_setting_lookup_int((NODE),#PATH, &((VALUE)->PATH)))   \
-  {                                                                            \
-    MM_ERR("invalid %s in configuration file",#PATH );                         \
-    goto err;                                                                  \
-  }                                                                            \
-}                                                                              \
-while(0);
 
 int main(int argc, char **argv) {
 
