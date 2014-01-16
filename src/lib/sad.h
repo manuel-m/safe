@@ -222,6 +222,7 @@ extern "C" {
 #define AIS_SPEED_FAST_MOVER	1022		/* >= 102.2 knots */
                 bool accuracy; /* position accuracy */
 #define AIS_LATLON_DIV	600000.0
+#define AIS_LATLON_DIV_INV	1.0 / 600000.0
                 int lon; /* longitude */
 #define AIS_LON_NOT_AVAILABLE	0x6791AC0
                 int lat; /* latitude */

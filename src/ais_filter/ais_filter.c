@@ -75,8 +75,8 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
     if (3u < ais->type) return 0;
 
-    const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
-    const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
+    const double lat = (double) ais->type1.lat * AIS_LATLON_DIV_INV;
+    const double lon = (double) ais->type1.lon * AIS_LATLON_DIV_INV;
 
     const geofilter_t* gf = values.geofilters.items;
     unsigned n = values.geofilters.n;
