@@ -32,15 +32,11 @@ typedef struct {
 
 static struct {
     int io_admin_http_port;
-
     channel_in_values_t in_ais;
-
     channel_out_values_t out_ais_tcp_server;
     channel_out_values_t out_ais_tcp_error;
-
     MM_DECL_VECTOR(geofilter_t) geofilters;
     MM_DECL_VECTOR(out_ais_udp_t) out_ais_udp_streams;
-
 } values;
 
 static sad_filter_t filter;
@@ -103,7 +99,14 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
         /* only if we have clients */
         if (0 == mmpool_taken_len(srv_out_tcp_filtered_ais.m_clients)) return 0;
-        br_out_tcp_write_string(&srv_out_tcp_filtered_ais, f_->fwd_mess, fwd_with_ts_len);
+        
+        /* only hex timestamp is handled for now*/
+        if(NC_TS_HEX == values.out_ais_tcp_server.ts_id){
+         br_out_tcp_write_string(&srv_out_tcp_filtered_ais, f_->fwd_mess, fwd_with_ts_len);
+        }else
+        {
+         br_out_tcp_write_string(&srv_out_tcp_filtered_ais, fwd_without_ts, fwd_len_without_ts);
+        }
     }
     return 0;
 }
@@ -128,7 +131,7 @@ static int load_config(config_t* cfg_) {
     MM_CFG_GET_STR(cfg_, in_ais.name, values);
     MM_CFG_GET_INT(cfg_, in_ais.port, values);
 
-    values.in_ais.type_id = nc_int_channel_status(values.in_ais.type);
+    values.in_ais.type_id = nc_in_channel_type_id(values.in_ais.type);
 
     if (NC_IN_INVALID == values.in_ais.type_id) {
         MM_ERR("Invalid in channel type:%s", values.in_ais.type);
@@ -150,6 +153,9 @@ static int load_config(config_t* cfg_) {
     MM_CFG_GET_STR(cfg_, out_ais_tcp_server.name, values);
     MM_CFG_GET_INT(cfg_, out_ais_tcp_server.port, values);
     MM_CFG_GET_INT(cfg_, out_ais_tcp_server.max_connections, values);
+    
+    MM_CFG_GET_STR(cfg_, out_ais_tcp_server.timestamp, values);
+    values.out_ais_tcp_server.ts_id = nc_out_channel_ts_id(values.out_ais_tcp_server.timestamp);
 
     MM_CFG_GET_STR(cfg_, out_ais_tcp_error.name, values);
     MM_CFG_GET_INT(cfg_, out_ais_tcp_error.port, values);

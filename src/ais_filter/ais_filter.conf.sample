@@ -4,59 +4,60 @@ io_admin_http_port = 9997;
 
 /*
 in_ais = {
-          name = "in_ais";
-          type = "udp_server";
-          port = 9990; }
+          name = "in_ais"
+          type = "udp_server"
+          port = 9990 }
 
 in_ais = {
-          name = "in_ais";
-          type = "tcp_server";
-          port = 9990; }
+          name = "in_ais"
+          type = "tcp_server"
+          port = 9990 }
 */
 
 in_ais = {
-          name = "in_ais";
-          type = "tcp_client";
-          addr = "10.18.0.1";
-          port = 4010; }
+          name = "in_ais"
+          type = "tcp_client"
+          addr = "10.18.0.1"
+          port = 4010 }
 
 
 
 // out_ais_tcp_server
 out_ais_tcp_server = { 
-                      name            = "out_ais_tcp_server";
-                      port            = 9993;
-                      max_connections = 32; }
+                      name            = "out_ais_tcp_server"
+                      port            = 9993
+                      max_connections = 32
+                      timestamp       = "none" }
 
 // out_ais_tcp_error for debug
 out_ais_tcp_error = { 
-                     name            = "out_ais_tcp_error";
-                     port            = 9994;
-                     max_connections = 32; }
+                     name            = "out_ais_tcp_error"
+                     port            = 9994
+                     max_connections = 32 }
 
 // geographical filter
 geofilter = ( { 
-               name = "Europe";
-               x1 = -16.0;
-               y1 = 45.0;
-               x2 = 9.0;
-               y2 = 36.0; },
+               name = "Europe"
+               x1 = -16.0
+               y1 = 45.0
+               x2 = 9.0
+               y2 = 36.0 },
               { 
-               name = "Brazil";
-               x1 = 12.0;
-               y1 = -76.0;
-               x2 = -38.0;
-               y2 = -30.0; } );  
+               name = "Brazil"
+               x1 = 12.0
+               y1 = -76.0
+               x2 = -38.0
+               y2 = -30.0 } )
 
 // out udp channels             
 /*
 out_ais_udp = ( {  
-                  addr = "192.168.200.13";
-                  port = 9993; },
+                  addr = "192.168.200.13"
+                  port = 9993 },
                  {
                   addr = "l18",
-                  port = 9993; },
+                  port = 9993 },
                  {
-                  addr = "localhost";
-                  port = 9993; } );
+                  addr = "localhost"
+                  port = 9993 } )
 */
