@@ -59,6 +59,7 @@ add_library(${LIBMM_A}
             ${LIBMM_SRC}/mmtrace.c 
             ${LIBMM_SRC}/mmpool.c 
             ${LIBMM_SRC}/sub0.c 
+            ${LIBMM_SRC}/netchannel.c 
             ${LIBMM_SRC}/bagride.c 
             ${LIBMM_SRC}/sad.c)
             

@@ -1,8 +1,26 @@
 
-
 // admin_http_port
 io_admin_http_port = 9997;
-in_ais_udp_port = 9990;
+
+/*
+in_ais = {
+          name = "in_ais";
+          type = "udp_server";
+          port = 9990; }
+
+in_ais = {
+          name = "in_ais";
+          type = "tcp_server";
+          port = 9990; }
+*/
+
+in_ais = {
+          name = "in_ais";
+          type = "tcp_client";
+          addr = "10.18.0.1";
+          port = 4010; }
+
+
 
 // out_ais_tcp_server
 out_ais_tcp_server = { 
@@ -31,6 +49,7 @@ geofilter = ( {
                y2 = -30.0; } );  
 
 // out udp channels             
+/*
 out_ais_udp = ( {  
                   addr = "192.168.200.13";
                   port = 9993; },
@@ -40,3 +59,4 @@ out_ais_udp = ( {
                  {
                   addr = "localhost";
                   port = 9993; } );
+*/

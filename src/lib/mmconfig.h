@@ -22,6 +22,20 @@ do {                                                                           \
   }                                                                            \
 }                                                                              \
 while(0);
+    
+#define MM_CFG_GET_UNSIGNED(CFG,PATH,VALUE)                                    \
+do {                                                                           \
+  int val;                                                                     \
+  if(CONFIG_TRUE!=config_lookup_int((CFG),#PATH, &val ))                       \
+  {                                                                            \
+    if(0 > val ) {                                                             \
+      MM_ERR("invalid %s in configuration file",#PATH );                       \
+      goto err;                                                                \
+      }                                                                        \
+  }                                                                            \
+  (VALUE.PATH)=val;                                                            \
+}                                                                              \
+while(0);    
 
 #define MM_CFG_GET_STR(CFG,PATH,VALUE)                                         \
 do {                                                                           \
