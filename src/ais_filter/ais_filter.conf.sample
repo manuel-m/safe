@@ -27,7 +27,7 @@ out_ais_tcp_server = {
                       name            = "out_ais_tcp_server"
                       port            = 9993
                       max_connections = 32
-                      timestamp       = "none" }
+                      timestamp       = "hex" } /* "none" or "hex" */
 
 // out_ais_tcp_error for debug
 out_ais_tcp_error = { 

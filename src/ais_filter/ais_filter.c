@@ -73,15 +73,24 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     struct ais_t * ais = &f_->ais;
     sub0_substring_t* s = f_->mess;
 
-    if (3 < ais->type) return 0;
+    if (3u < ais->type) return 0;
 
     const double lat = (double) ais->type1.lat / AIS_LATLON_DIV;
     const double lon = (double) ais->type1.lon / AIS_LATLON_DIV;
 
-    const geofilter_t* gf = &values.geofilters.items[0];
+    const geofilter_t* gf = values.geofilters.items;
+    unsigned n = values.geofilters.n;
 
-    if (lon > gf->x1 && lon < gf->x2 && lat < gf->y1 && lat > gf->y2) {
+    do {
+        if (lon > gf->x1 && lon < gf->x2 && lat < gf->y1 && lat > gf->y2)
+            goto found;
+        ++gf;
+        --n;
+    } while (n);
 
+    return 0;
+
+found:{
         const char* hx = br_tsrefhex_get();
         char* fwd_without_ts = &f_->fwd_mess[MM_HEX_TIMESTAMP_LEN];
 
@@ -99,16 +108,16 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
         /* only if we have clients */
         if (0 == mmpool_taken_len(srv_out_tcp_filtered_ais.m_clients)) return 0;
-        
+
         /* only hex timestamp is handled for now*/
-        if(NC_TS_HEX == values.out_ais_tcp_server.ts_id){
-         br_out_tcp_write_string(&srv_out_tcp_filtered_ais, f_->fwd_mess, fwd_with_ts_len);
-        }else
-        {
-         br_out_tcp_write_string(&srv_out_tcp_filtered_ais, fwd_without_ts, fwd_len_without_ts);
+        if (NC_TS_HEX == values.out_ais_tcp_server.ts_id) {
+            br_out_tcp_write_string(&srv_out_tcp_filtered_ais, f_->fwd_mess, fwd_with_ts_len);
+        } else {
+            br_out_tcp_write_string(&srv_out_tcp_filtered_ais, fwd_without_ts, fwd_len_without_ts);
         }
+
+        return 0;
     }
-    return 0;
 }
 
 static int on_tcp_parse(ssize_t nread_, const uv_buf_t* inbuf_, br_tcp_server_t* pserver_) {
@@ -153,7 +162,7 @@ static int load_config(config_t* cfg_) {
     MM_CFG_GET_STR(cfg_, out_ais_tcp_server.name, values);
     MM_CFG_GET_INT(cfg_, out_ais_tcp_server.port, values);
     MM_CFG_GET_INT(cfg_, out_ais_tcp_server.max_connections, values);
-    
+
     MM_CFG_GET_STR(cfg_, out_ais_tcp_server.timestamp, values);
     values.out_ais_tcp_server.ts_id = nc_out_channel_ts_id(values.out_ais_tcp_server.timestamp);
 
@@ -242,7 +251,7 @@ int main(int argc, char **argv) {
             MM_INFO("ais_out_udp[%d]=\"%s:%d\"", (idx + 1), p->addr, p->port);
         }
     }
-    if (sad_filter_init(&filter, on_ais_decoded, NULL, ais_decode_error)) 
+    if (sad_filter_init(&filter, on_ais_decoded, NULL, ais_decode_error))
         MM_GERR("internal error");
 
     /* udp server  */
