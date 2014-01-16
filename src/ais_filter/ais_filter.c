@@ -54,10 +54,6 @@ static br_http_server_t srv_out_http_stats;
 static br_tcp_server_t srv_out_tcp_filtered_ais;
 static br_tcp_server_t srv_out_tcp_filtered_ais_error;
 
-static void user_info_dump(void) {
-    printf(HELP_USAGE "\n");
-}
-
 static int on_stats_response(br_http_client_t* cli_) {
     cli_->m_resbuf.len = sad_stats_string(&cli_->m_resbuf.base, &filter);
     return 0;
@@ -163,8 +159,7 @@ static int load_config(config_t* cfg_) {
     {
         config_setting_t *list = config_lookup(cfg_, "geofilter");
         if (NULL == list) {
-            MM_ERR("Missing geofilters in configuration file");
-            goto err;
+            MM_GERR("Missing geofilters in configuration file");
         }
         MM_ALLOC_VECTOR(values.geofilters, geofilter_t, config_setting_length(list));
         MM_INFO("geofilter len:%d", values.geofilters.n);
@@ -185,21 +180,18 @@ static int load_config(config_t* cfg_) {
     {
         config_setting_t *list = config_lookup(cfg_, "out_ais_udp");
         if (NULL == list) {
-            MM_ERR("Missing out_ais_udp in configuration file");
-            goto err;
-        }
-        MM_ALLOC_VECTOR(values.out_ais_udp_streams, out_ais_udp_t, config_setting_length(list));
-
-        MM_INFO("out_ais_udp_streams len:%d", values.out_ais_udp_streams.n);
-
-        out_ais_udp_t* p;
-        int i;
-
-        for (i = 0, p = values.out_ais_udp_streams.items; i < values.out_ais_udp_streams.n; ++i, p++) {
-            config_setting_t *setting = config_setting_get_elem(list, i);
-            MM_CFGNODE_GET_STR(setting, addr, p);
-            MM_INFO("out_ais_udp[%d].addr == %s", i, p->addr);
-            MM_CFGNODE_GET_INT(setting, port, p);
+            MM_INFO("No ais udp output");
+        } else {
+            MM_ALLOC_VECTOR(values.out_ais_udp_streams, out_ais_udp_t, config_setting_length(list));
+            MM_INFO("out_ais_udp_streams len:%d", values.out_ais_udp_streams.n);
+            out_ais_udp_t* p;
+            int i;
+            for (i = 0, p = values.out_ais_udp_streams.items; i < values.out_ais_udp_streams.n; ++i, p++) {
+                config_setting_t *setting = config_setting_get_elem(list, i);
+                MM_CFGNODE_GET_STR(setting, addr, p);
+                MM_INFO("out_ais_udp[%d].addr == %s", i, p->addr);
+                MM_CFGNODE_GET_INT(setting, port, p);
+            }
         }
     }
 
@@ -217,9 +209,7 @@ int main(int argc, char **argv) {
 
     br_tsref_init(TIMESTAMP_UPDATE_MS);
 
-#define MM_GERR { user_info_dump();goto err;}
-
-    if (2 > argc) MM_GERR;
+    if (2 > argc) MM_GERR(HELP_USAGE);
 
     MM_INFO("version=\"%s\"", MM_VERSION_INFO);
     MM_INFO("conf=\"%s\"", argv[1]);
@@ -229,11 +219,10 @@ int main(int argc, char **argv) {
     config_init(&cfg);
 
     if (!config_read_file(&cfg, argv[1])) {
-        MM_ERR("%s:%d - %s\n", config_error_file(&cfg),
+        MM_GERR("%s:%d - %s\n", config_error_file(&cfg),
                 config_error_line(&cfg), config_error_text(&cfg));
-        goto err;
     }
-    if (0 < load_config(&cfg)) MM_GERR;
+    if (0 < load_config(&cfg)) MM_GERR("Error in configuration file %s", argv[1]);
 
     /* udp client init */
     if (0 < values.out_ais_udp_streams.n) {
@@ -242,13 +231,13 @@ int main(int argc, char **argv) {
         out_ais_udp_t* p = values.out_ais_udp_streams.items;
         for (idx = 0; idx < values.out_ais_udp_streams.n; idx++, p++) {
             if (0 > br_udp_client_add(udp_clients, p->addr, p->port)) {
-                MM_ERR("invalid udp client %s:%d", p->addr, p->port);
-                goto err;
+                MM_GERR("invalid udp client %s:%d", p->addr, p->port);
             }
             MM_INFO("ais_out_udp[%d]=\"%s:%d\"", (idx + 1), p->addr, p->port);
         }
     }
-    if (sad_filter_init(&filter, on_ais_decoded, NULL, ais_decode_error)) MM_GERR;
+    if (sad_filter_init(&filter, on_ais_decoded, NULL, ais_decode_error)) 
+        MM_GERR("internal error");
 
     /* udp server  */
     if (NC_IN_UDPSRV == values.in_ais.type_id) {
@@ -277,7 +266,6 @@ int main(int argc, char **argv) {
 
     br_run();
 
-#undef MM_GERR
 
 end:
     mmpool_free(udp_clients);

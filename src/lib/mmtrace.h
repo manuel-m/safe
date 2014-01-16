@@ -22,11 +22,20 @@ do {                                                        \
       exit(1);                                              \
     }                                                       \
 } while(0) 
- 
-   
+    
 #define MM_INFO(b...) mmtrace(MM_TRACE_LEVEL_INFO, __FILE__, __LINE__, b)    
 #define MM_WARN(b...) mmtrace(MM_TRACE_LEVEL_WARN, __FILE__, __LINE__, b)    
-#define MM_ERR(b...)  mmtrace(MM_TRACE_LEVEL_ERR, __FILE__, __LINE__, b)    
+
+#define MM_ERR(b...)                                                           \
+do{                                                                            \
+    mmtrace(MM_TRACE_LEVEL_ERR, __FILE__, __LINE__, b);                        \
+}while(0);    
+
+#define MM_GERR(b...)                                                          \
+do{                                                                            \
+    mmtrace(MM_TRACE_LEVEL_ERR, __FILE__, __LINE__, b);                        \
+    goto err;                                                                  \
+}while(0);
     
 void mmtrace_level(int level_);
 void mmtrace(int level_, const char *file_, int line_, const char *format_, ...);
