@@ -29,7 +29,7 @@ status()
 start()
 {
         sanity
-        for f in $(ls -1 ${MCONF_DIR}/*.conf); do
+        for f in $(ls -1 ${MCONF_DIR}/*.cfg); do
             echo "[INFO] starting ${MEXEC} $f"
             ${MEXE} ${f} &
         done

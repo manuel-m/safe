@@ -184,7 +184,7 @@ static int load_config(config_t* cfg_) {
         for (i = 0, p = values.geofilters.items; i < values.geofilters.n; ++i, p++) {
             config_setting_t *setting = config_setting_get_elem(list, i);
             MM_CFGNODE_GET_STR(setting, name, p);
-            MM_INFO("geofilter[%d].name == %s", i, p->name);
+            MM_INFO("geofilter[%d].name == \"%s\"", i, p->name);
             MM_CFGNODE_GET_DOUBLE(setting, x1, p);
             MM_CFGNODE_GET_DOUBLE(setting, y1, p);
             MM_CFGNODE_GET_DOUBLE(setting, x2, p);
