@@ -3,9 +3,8 @@ safe
 
 simple AIS filter embeddable.
 
-External libraries sources have been included (lua,libuv,http-parser)
-- see libs/buildit scripts to generate liblua.a and libuv.a 
-- some sources are generated using homemade lua code generator mmsdk.lua + ais_filter_config_api.lua => ais_filter_config.[ch]
+External libraries sources have been included (libconfig,libuv,http-parser)
+- see libs/buildit scripts to generate libconfig.a and libuv.a 
 - libuv needs gyp on linux
 
 build instructions
@@ -25,18 +24,18 @@ build instructions
 usage
 =====
 
-ais_filter /path/to/ais_filter.conf
+ais_filter /path/to/ais_filter.cfg
+ais_buffer /path/to/ais_buffer.cfg
 
 in course
 =========
 
-- smarter config code generator (multilevel,less code)
+- vessels history (medium range buffer)
 
 TODO
 =====
 
 - tcp client tools name resolution
-- vessels history 
 - vessels history FT
 - default config display
 - vessels server
