@@ -17,6 +17,7 @@
 #include "mmtrace.h"
 #include "bagride.h"
 #include "mmconfig.h"
+#include "mmcb.h"
 
 static struct {
     int buffer_max;
@@ -26,17 +27,15 @@ static struct {
     channel_out_values_t out_ais_tcp_error;
 } values;
 
-//static struct {
-//    
-//    
-//} ais_buffer;
+static cb_t ais_buffer;
 
 static br_http_server_t srv_out_http_stats;
 static br_tcp_client_t in_ais_tcpclient;
 
 static int on_stats_response(br_http_client_t* cli_) {
-    cli_->m_resbuf.base = strdup("TODO");
-    cli_->m_resbuf.len = strlen(cli_->m_resbuf.base);
+    cli_->m_resbuf.len = asprintf(&cli_->m_resbuf.base,
+            "ais_buffer={capacity=%u,count=%u,index=%u}",
+            ais_buffer.capacity,ais_buffer.count,ais_buffer.index);
     return 0;
 }
 
@@ -71,9 +70,8 @@ err:
 
 static int on_read_tcp_client_in_ais(ssize_t nread_, const br_buf_t* buf_,
         br_tcp_client_t* client_) {
-    (void) nread_;
     (void) client_;
-    MM_INFO("%s", buf_->base);
+    cb_push(&ais_buffer, (void*) buf_->base, nread_);
     return 0;
 }
 
@@ -87,10 +85,13 @@ int main(int argc, char **argv) {
     MM_INFO("version=\"%s\"", MM_VERSION_INFO);
     MM_INFO("conf=\"%s\"", argv[1]);
 
+
+    /* 7 => 128, NMEA max = 91*/
+    cb_init(&ais_buffer, values.buffer_max, 7);
+
     /* http server  */
     br_http_server_init(&srv_out_http_stats, values.io_admin_http_port,
             on_stats_response);
-
 
     r = br_tcp_client_init(&in_ais_tcpclient, values.in_ais.name,
             values.in_ais.addr, values.in_ais.port, on_read_tcp_client_in_ais);

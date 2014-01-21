@@ -3,10 +3,9 @@
 
 OUTDIR=./bin
 #PROJ="ais_filter ais_server" 
-PROJ="ais_filter"
+PROJ="ais_filter ais_buffer"
 
 LIBUV_A=$(find ./libs -name libuv.a)
-LIBLUA_A=$(find ./libs -name liblua.a)
 LIBCONFIG_A=$(find ./libs -name libconfig.a)
 
 LIBCONFIG_DIR=$(dirname $(find -name libconfig.h))
@@ -15,7 +14,7 @@ LIBCONFIG_DIR=$(dirname $(find -name libconfig.h))
 if [ ! -d ${OUTDIR} ]; then mkdir ./bin; fi 
 
 for f in ${PROJ}; do
-  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -I${LIBCONFIG_DIR} -Isrc/lib -Ilibs/lua-5.2.2/src -Ilibs/libuv/include \
+  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -I${LIBCONFIG_DIR} -Isrc/ -Isrc/lib -Ilibs/libuv/include \
   $(ls src/lib/*.c src/${f}/*.c) \
   ${LIBUV_A} ${LIBCONFIG_A} -lpthread -lrt -lm
   strip -s ${OUTDIR}/${f}
