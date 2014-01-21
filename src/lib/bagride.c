@@ -37,15 +37,15 @@ static void on_alloc_buffer(uv_handle_t *handle_, size_t suggested_size_,
 static void on_close(uv_handle_t* client_handle_) {
 
     mmpool_item_t* client_pool_item = (mmpool_item_t*) client_handle_->data;
-    br_tcp_server_t* server = (br_tcp_server_t*) client_pool_item->m_parent->m_userdata;
+    br_tcp_server_t* server = (br_tcp_server_t*) client_pool_item->parent->userdata;
 
     mmpool_giveback(client_pool_item);
 
     MM_INFO("%s:%d disconnect (%d/%d) (%p)",
             server->m_name,
             server->m_port,
-            server->m_clients->m_taken_len,
-            server->m_clients->m_alloc_max,
+            server->m_clients->taken_count,
+            server->m_clients->capacity,
             client_handle_);
 }
 
@@ -65,7 +65,7 @@ static void on_tcp_read(uv_stream_t* stream_, ssize_t nread_, const uv_buf_t* re
         MM_INFO("on_tcp_read (%p)", stream_);
 
         mmpool_item_t* client_pool_item = (mmpool_item_t*) stream_->data;
-        br_tcp_server_t* tcp_server = (br_tcp_server_t*) client_pool_item->m_parent->m_userdata;
+        br_tcp_server_t* tcp_server = (br_tcp_server_t*) client_pool_item->parent->userdata;
         br_buf_t* write_buffer = &tcp_server->m_write_buffer;
         br_tcp_server_parser_cb user_parse_cb = (br_tcp_server_parser_cb) tcp_server->m_user_parse_cb;
         MM_ASSERT(0 == user_parse_cb(nread_, read_buf_, tcp_server));
@@ -181,7 +181,7 @@ static void on_in_server_connect(uv_stream_t* server_handle_, int status_) {
         MM_WARN("%s:%d max connections reached (%d) ... system wont accept new connections",
                 server->m_name,
                 server->m_port,
-                server->m_clients->m_alloc_max);
+                server->m_clients->capacity);
         /* workaround : connection is accepted and immediatly closed.
          This allow to re-accept new connections after some disconnections ...*/
         pclient = malloc(sizeof (uv_tcp_t));
@@ -191,7 +191,7 @@ static void on_in_server_connect(uv_stream_t* server_handle_, int status_) {
         return;
 
     }
-    pclient = (uv_tcp_t *) client_pool_item->m_p;
+    pclient = (uv_tcp_t *) client_pool_item->p;
 
     uv_tcp_init(uv_default_loop(), pclient);
     pclient->data = client_pool_item;
@@ -202,8 +202,8 @@ static void on_in_server_connect(uv_stream_t* server_handle_, int status_) {
         MM_INFO("%s:%d connect (%d/%d) (serv:%p cli:%p)",
                 server->m_name,
                 server->m_port,
-                server->m_clients->m_taken_len,
-                server->m_clients->m_alloc_max,
+                server->m_clients->taken_count,
+                server->m_clients->capacity,
                 server_handle_, pclient);
         uv_read_start((uv_stream_t*) pclient, on_alloc_buffer, on_tcp_read);
     } else {
@@ -254,8 +254,7 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
         struct addrinfo *res_) {
 
     mmpool_item_t* cli_pool_item = (mmpool_item_t*) resolver_->data;
-    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item->m_p;
-
+    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item->p;
     if (0 > status_) {
         MM_ERR("dns failed for:%s %s", cli->m_addr,uv_strerror(status_));
         mmpool_giveback(cli_pool_item);
@@ -277,7 +276,7 @@ static void on_resolved_udp_client(uv_getaddrinfo_t *resolver_, int status_,
 
 int br_udp_client_register(mmpool_item_t* cli_pool_item_) {
     
-    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item_->m_p;
+    br_udp_client_t* cli = (br_udp_client_t*) cli_pool_item_->p;
     int r = uv_udp_init(uv_default_loop(), &cli->m_handler);
     if (0 != r) {
         MM_ERR("new udp client failed :%s",uv_strerror(r));
@@ -317,25 +316,9 @@ int br_udp_client_add(mmpool_t* cli_pool_, const char* addr_,int port_) {
 
     mmpool_item_t* pool_item = mmpool_take(cli_pool_);
     if (NULL == pool_item) return -1;
-    br_udp_client_t* cli = (br_udp_client_t*) pool_item->m_p;
+    br_udp_client_t* cli = (br_udp_client_t*) pool_item->p;
 
-//     sub0_line_t line;
-//     sub0_substring_t* sub = NULL;
-//     sub0_line_prepare(target_, strlen(target_), ':', &line);
-
-//     /* 1st field:addr */
-//     sub = sub0_line_next_substring(&line);
-//     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
-//     if (BR_MAX_ADDR_SIZE < sub->n) return -1;
-
-//     memcpy(cli->m_addr, sub->start, sub->n);
-//     cli->m_addr[sub->n] = '\0';
     strcpy(cli->m_addr, addr_);
-
-//     /* 2nd field:port */
-//     sub = sub0_line_next_substring(&line);
-//     if (NULL == sub || 0 == sub->n || NULL == sub->start) return -1;
-//     cli->m_port = atoi(sub->start);
     cli->m_port = port_;
     if (0 > br_udp_client_register(pool_item)) return -1;
     return 0;

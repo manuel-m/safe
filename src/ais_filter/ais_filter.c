@@ -7,20 +7,15 @@
 #include "mmconfig.h"
 #include "mmvector.h"
 #include "netchannel.h"
+#include "mmdefs.h"
 
-#define MM_VERSION_INFO "v0.2a"
+
 
 #define HELP_USAGE "usage: ais_filter cfg_file" 
 
 #define AIS_SRV       0
 #define AIS_SRV_ERROR 1
 
-#define TIMESTAMP_UPDATE_MS 1000
-
-typedef struct {
-    const char* addr;
-    int port;
-} out_ais_udp_t;
 
 typedef struct {
     const char* name;
@@ -230,14 +225,7 @@ int main(int argc, char **argv) {
     MM_INFO("conf=\"%s\"", argv[1]);
 
     config_t cfg;
-    memset(&values, 0, sizeof (values));
-    config_init(&cfg);
-
-    if (!config_read_file(&cfg, argv[1])) {
-        MM_GERR("%s:%d - %s\n", config_error_file(&cfg),
-                config_error_line(&cfg), config_error_text(&cfg));
-    }
-    if (0 < load_config(&cfg)) MM_GERR("Error in configuration file %s", argv[1]);
+    MM_CONFIG_INIT(&cfg, argv[1]);
 
     /* udp client init */
     if (0 < values.out_ais_udp_streams.n) {

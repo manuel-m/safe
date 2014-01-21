@@ -21,6 +21,11 @@ typedef struct {
     int port;
 } channel_in_values_t;
 
+typedef struct {
+    const char* addr;
+    int port;
+} out_ais_udp_t;
+
 #define NC_UDPSRV "udp_server"
 #define NC_TCPSRV "tcp_server"
 #define NC_TCPCLI "tcp_client"

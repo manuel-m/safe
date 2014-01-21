@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mmtest.h"
 #include "mmpool.h"
 
 struct tst_pool {
@@ -12,15 +13,9 @@ static int name_cmp_cb(void* l_, void* r_) {
     return (strcmp(((struct tst_pool*) l_)->name, (const char*) r_));
 }
 
-static int has_failed = 0;
+MMTEST_DECL
 
-#define MMTEST(CHECK)                                                          \
-do {                                                                           \
-  if((!CHECK)) {                                                               \
-   printf("[FAIL] " #CHECK "%s:%d\n", __FILE__, __LINE__);                     \
-   has_failed = 1;                                                             \
-  }                                                                            \
-} while(0)
+
 
 int main(int argc, char **argv) {
     (void) argc;
@@ -29,18 +24,18 @@ int main(int argc, char **argv) {
     {
         mmpool_t* pool = mmpool_new(2, 10, 4, sizeof (struct tst_pool), NULL);
         MMTEST((NULL != pool));
-        MMTEST((2 == pool->m_alloc_len));
-        MMTEST((10 == pool->m_alloc_max));
-        MMTEST((4 == pool->m_alloc_step));
-        MMTEST((0 == pool->m_taken_len));
+        MMTEST((2 == pool->alloc_count));
+        MMTEST((10 == pool->capacity));
+        MMTEST((4 == pool->alloc_step));
+        MMTEST((0 == pool->taken_count));
 
         /* take 0x */
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((2 == pool->m_alloc_len));
-            MMTEST((1 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((2 == pool->alloc_count));
+            MMTEST((1 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take0x");
         }
 
@@ -48,9 +43,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((2 == pool->m_alloc_len));
-            MMTEST((2 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((2 == pool->alloc_count));
+            MMTEST((2 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take1x");
         }
 
@@ -58,9 +53,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((6 == pool->m_alloc_len));
-            MMTEST((3 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((6 == pool->alloc_count));
+            MMTEST((3 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take2x");
         }
 
@@ -68,9 +63,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((6 == pool->m_alloc_len));
-            MMTEST((4 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((6 == pool->alloc_count));
+            MMTEST((4 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take3x");
         }
 
@@ -78,9 +73,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((6 == pool->m_alloc_len));
-            MMTEST((5 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((6 == pool->alloc_count));
+            MMTEST((5 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take4x");
         }
 
@@ -88,9 +83,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((6 == pool->m_alloc_len));
-            MMTEST((6 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((6 == pool->alloc_count));
+            MMTEST((6 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take5x");
         }
 
@@ -98,9 +93,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((10 == pool->m_alloc_len));
-            MMTEST((7 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((10 == pool->alloc_count));
+            MMTEST((7 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take6x");
         }
 
@@ -108,9 +103,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((10 == pool->m_alloc_len));
-            MMTEST((8 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((10 == pool->alloc_count));
+            MMTEST((8 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take7x");
         }
 
@@ -118,9 +113,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((10 == pool->m_alloc_len));
-            MMTEST((9 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((10 == pool->alloc_count));
+            MMTEST((9 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take8x");
         }
 
@@ -128,9 +123,9 @@ int main(int argc, char **argv) {
         {
             mmpool_item_t* item = mmpool_take(pool);
             MMTEST((NULL != item));
-            MMTEST((10 == pool->m_alloc_len));
-            MMTEST((10 == pool->m_taken_len));
-            struct tst_pool* tp = (struct tst_pool*) item->m_p;
+            MMTEST((10 == pool->alloc_count));
+            MMTEST((10 == pool->taken_count));
+            struct tst_pool* tp = (struct tst_pool*) item->p;
             strcpy(tp->name, "take9x");
         }
 
@@ -164,15 +159,15 @@ int main(int argc, char **argv) {
 
             mmpool_item_t* found_item = mmpool_find(&finder, (void*) "take3x");
             MMTEST((NULL != found_item));
-            struct tst_pool* tp = (struct tst_pool*) found_item->m_p;
+            struct tst_pool* tp = (struct tst_pool*) found_item->p;
             MMTEST((NULL != tp));
             MMTEST(0 == strcmp("take3x", tp->name));
 
             /* test giveback*/
             {
                 mmpool_giveback(found_item);
-                MMTEST((10 == pool->m_alloc_len));
-                MMTEST((9 == pool->m_taken_len));
+                MMTEST((10 == pool->alloc_count));
+                MMTEST((9 == pool->taken_count));
 
                 /* test expected after giveback */
                 {
@@ -196,9 +191,9 @@ int main(int argc, char **argv) {
             {
                 mmpool_item_t* itema = mmpool_take(pool);
                 MMTEST((NULL != itema));
-                MMTEST((10 == pool->m_alloc_len));
-                MMTEST((10 == pool->m_taken_len));
-                struct tst_pool* tp = (struct tst_pool*) itema->m_p;
+                MMTEST((10 == pool->alloc_count));
+                MMTEST((10 == pool->taken_count));
+                struct tst_pool* tp = (struct tst_pool*) itema->p;
                 strcpy(tp->name, "takeax");
 
                 /* test expected after retaken */
@@ -234,16 +229,12 @@ int main(int argc, char **argv) {
     {
         mmpool_t* pool = mmpool_easy_new(10, sizeof (struct tst_pool), NULL);
         MMTEST((NULL != pool));
-        MMTEST((10 == pool->m_alloc_len));
-        MMTEST((10 == pool->m_alloc_max));
-        MMTEST((1 == pool->m_alloc_step));
+        MMTEST((10 == pool->alloc_count));
+        MMTEST((10 == pool->capacity));
+        MMTEST((1 == pool->alloc_step));
         mmpool_free(pool);
     }
 
-    if (0 == has_failed) {
-        printf("[PASS] %s\n",argv[0]);
-    }
-
-    return has_failed;
+    MMTEST_END
 }
 

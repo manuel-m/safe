@@ -10,7 +10,7 @@ extern "C" {
 #define MM_TRACE_LEVEL_WARN 1
 #define MM_TRACE_LEVEL_INFO 2
     
-    
+  
 
 #define MM_ASSERT(COND)                                     \
 do {                                                        \

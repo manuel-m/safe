@@ -16,19 +16,19 @@ extern "C" {
     struct mmpool_s;
     
     typedef struct mmpool_item_s {
-        unsigned m_state; /* 0:invalid 1:valid */
-        struct mmpool_s* m_parent;
-        void* m_p; /* internal data */
+        unsigned state; /* 0:invalid 1:valid */
+        struct mmpool_s* parent;
+        void* p; /* internal data */
     } mmpool_item_t;
 
     typedef struct mmpool_s {
-        unsigned m_alloc_max;
-        unsigned m_alloc_step;
-        unsigned m_alloc_len;
-        unsigned m_taken_len;
-        size_t m_item_size;
-        void* m_userdata; 
-        long long m_taken_total;
+        unsigned capacity;
+        unsigned alloc_step;
+        unsigned alloc_count;
+        unsigned taken_count;
+        size_t item_sz;
+        void* userdata; 
+        long long taken_total;
         mmpool_item_t* items;
     } mmpool_t;
 
@@ -37,7 +37,7 @@ extern "C" {
     
 #define mmpool_easy_new(MAX,ITEMSIZE, USERDATA) mmpool_new( MAX, MAX, 1, ITEMSIZE, USERDATA)
 
-#define mmpool_taken_len(PPOOL) PPOOL->m_taken_len 
+#define mmpool_taken_len(PPOOL) PPOOL->taken_count
 
     mmpool_item_t* mmpool_take(mmpool_t* pool_);
     void mmpool_giveback(mmpool_item_t* item_);

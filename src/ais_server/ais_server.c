@@ -57,12 +57,12 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
     if (NULL == found_item) {
         mmpool_item_t* item = mmpool_take(live_ships);
         if (item) {
-            ship = (mmship_t*) item->m_p;
+            ship = (mmship_t*) item->p;
             ship->mmsi = ais->mmsi;
         }
     } else {
         update = 1;
-        ship = (mmship_t*) found_item->m_p;
+        ship = (mmship_t*) found_item->p;
         ++(ship->nb_update);
     }
 
@@ -76,12 +76,12 @@ static int on_ais_decoded(struct sad_filter_s * f_) {
 
     if (0 == update) {
         buf->len = asprintf(&buf->base, "N %d\t(u:%d)[%d/%d]\n", ais->mmsi, ship->nb_update,
-                live_ships->m_taken_len,
-                live_ships->m_alloc_len);
+                live_ships->taken_count,
+                live_ships->alloc_count);
     } else {
         buf->len = asprintf(&buf->base, "u %d\t(u:%d)[%d/%d]\n", ais->mmsi, ship->nb_update,
-                live_ships->m_taken_len,
-                live_ships->m_alloc_len);
+                live_ships->taken_count,
+                live_ships->alloc_count);
     }
 
     if (0 > buf->len) return -1;
