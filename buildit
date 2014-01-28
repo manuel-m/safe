@@ -27,3 +27,8 @@ MMCC="-fwhole-program -ffast-math -msse2"
 f=ais_decoder
 gcc -DSAD_ENABLE_ALL -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c
 strip -s ${OUTDIR}/${f}
+
+#ais ais_history_filter (full decode)
+f=ais_history_filter
+gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
+strip -s ${OUTDIR}/${f}
