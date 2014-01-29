@@ -1,6 +1,7 @@
 #include<stdio.h> 
 #include<string.h>
 #include<stdlib.h>
+#include<time.h>
 
 #include<arpa/inet.h>
 #include<sys/socket.h>
@@ -22,6 +23,7 @@ static const char* nmea_without_ts = (char*) (current_nmea + MM_TIMESTAMP_CSV_OF
 static int udp_client_socket;
 static struct sockaddr_in si_other;
 static socklen_t slen = sizeof (si_other);
+
 
 int on_ais_decoded(struct sad_filter_s * f_) {
 
@@ -70,10 +72,28 @@ int main(int argc, char **argv) {
     if (0 == inet_aton(MM_TARGET_ADDR, &si_other.sin_addr))MM_GERR("inet_aton() failed");
 
     memset(current_nmea, 0, sizeof (current_nmea));
-
+    
+    unsigned ts = 0;
+    unsigned read_ts = 0;
+    unsigned offset_ts = 0;
+    unsigned req_sleep = 0;
+    
+    /* only 10 first digit for timestamp ...*/
+    char ts_string[10 + 1];
+    ts_string[10]='\0';
+    
     while (fgets((char*) current_nmea, sizeof (current_nmea), nmea_file) != NULL) {
         
+        ts = (unsigned)time(NULL);
+        memcpy(ts_string,current_nmea, 10);
+        read_ts = (unsigned)atoi(ts_string);
         
+        if(0u == offset_ts){
+            offset_ts = ts - read_ts;
+        }
+        req_sleep = read_ts + offset_ts - ts;
+//        MM_INFO("sleep:%u",req_sleep);
+        if(req_sleep > 0) sleep (req_sleep);
         
         nmea_without_ts_n = strlen(current_nmea) - MM_TIMESTAMP_CSV_OFFSET;
         sad_decode_multiline(&filter, nmea_without_ts, nmea_without_ts_n);
