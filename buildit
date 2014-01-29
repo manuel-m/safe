@@ -21,14 +21,20 @@ for f in ${PROJ}; do
 done
 
 #CC flags
-MMCC="-fwhole-program -ffast-math -msse2"
+#MMCC="-fwhole-program -ffast-math -msse2 -O3 -DNDEBUG"
+MMCC="-ffast-math -msse2 -O3 -DNDEBUG"
 
 #ais decoder (full decode)
 f=ais_decoder
-gcc -DSAD_ENABLE_ALL -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c
+gcc ${MMCC} -DSAD_ENABLE_ALL -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c
+strip -s ${OUTDIR}/${f}
+
+#ais decoder (full decode)
+f=ais_simple_udp_replayer
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
 
 #ais ais_history_filter (full decode)
 f=ais_history_filter
-gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
 strip -s ${OUTDIR}/${f}
