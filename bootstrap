@@ -9,8 +9,8 @@ fi
 
 PROJ="ais_filter ais_server"
 
-for f in ${PROJ}; do
-    cd ${current_pwd} 
-    echo "generating ${f}"
-    ./mmsdk.lua src/${f}/${f}_config_api.lua
-done
+#for f in ${PROJ}; do
+#    cd ${current_pwd} 
+#    echo "generating ${f}"
+#    ./mmsdk.lua src/${f}/${f}_config_api.lua
+#done
