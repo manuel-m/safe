@@ -34,7 +34,12 @@ f=ais_simple_udp_replayer
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
 
-#ais ais_history_filter (full decode)
+#file sampler
+f=file_sampler
+gcc ${MMCC} -o ${OUTDIR}/file_sampler -Isrc/lib src/ais_simple_udp_replayer/file_sampler.c src/lib/mmtrace.c
+# strip -s ${OUTDIR}/${f}
+
+#ais_history_filter (full decode)
 f=ais_history_filter
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
 strip -s ${OUTDIR}/${f}
