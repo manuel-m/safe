@@ -26,7 +26,7 @@ MMCC="-ffast-math -msse2 -O3 -DNDEBUG"
 
 #ais decoder (full decode)
 f=ais_decoder
-gcc ${MMCC} -DSAD_ENABLE_ALL -o ${OUTDIR}/${f} -Isrc/lib src/${f}.c  src/lib/sad.c src/lib/sub0.c
+gcc ${MMCC} -DSAD_ENABLE_ALL -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
 strip -s ${OUTDIR}/${f}
 
 #ais decoder (full decode)
@@ -37,7 +37,7 @@ strip -s ${OUTDIR}/${f}
 #file sampler
 f=file_sampler
 gcc ${MMCC} -o ${OUTDIR}/file_sampler -Isrc/lib src/ais_simple_udp_replayer/file_sampler.c src/lib/mmtrace.c
-# strip -s ${OUTDIR}/${f}
+strip -s ${OUTDIR}/${f}
 
 #ais_history_filter (full decode)
 f=ais_history_filter
