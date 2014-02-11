@@ -12,7 +12,7 @@ void tb_dump_unsigned_char(char* dest_, unsigned char n_)
     }  
 }
 
-void tb_dump_unsigned_char_array(char* dest_,unsigned char *data_, unsigned size_)
+void tb_dump_unsigned_char_array(char* dest_,unsigned char *data_, unsigned size_, char sep_)
 {
   unsigned j;
   unsigned char* p = data_;
@@ -22,7 +22,7 @@ void tb_dump_unsigned_char_array(char* dest_,unsigned char *data_, unsigned size
           *dest_='0' + (((*p)>> (i-1)) & 1);
           ++dest_;
       }
-    *dest_='\n';
+    *dest_= sep_;
     ++dest_;
     ++p;
   }

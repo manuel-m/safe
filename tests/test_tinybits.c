@@ -28,8 +28,10 @@ int main(int argc, char **argv) {
     
     // 4,9,64
     unsigned char testset[] = { 4u,9u,64u };
-    tb_dump_unsigned_char_array(buffer,testset, sizeof(testset)/sizeof(unsigned char));
-    MMTEST((0 == strcmp("00000100\n00001001\n01000000\n", buffer)));
+    tb_dump_unsigned_char_array(buffer,testset, sizeof(testset)/sizeof(unsigned char), ' ');
+    MMTEST((0 == strcmp("00000100 00001001 01000000 ", buffer)));
+    
+    
 
     
     MMTEST_END
