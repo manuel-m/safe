@@ -6,7 +6,7 @@
 
 #define AIVDM_PREFIX "!AIVDM,1,1,,A,"
 #define AIVDM_PREFIX_LEN 14
-#define AIVDM1_PAYLOAD_SIZE 168
+#define AIVDM1_PAYLOAD_SIZE 28
 
 /*
 |==============================================================================
@@ -32,17 +32,20 @@
 |==============================================================================   
  */
 
-
+/*
 void unsigned2_bits(unsigned char* vect_, unsigned in_, unsigned offset_){
     
     
     
 }
+*/
 
 int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
 
+    
+/*    
     unsigned mmsi = 211169260;
     
 const char str6b[64] =
@@ -71,12 +74,9 @@ do{                                                                            \
     xxxMMM6(p, mmsi);
     
     printf("%s\n", sentence);
+*/
 
 
-
-
-
-    /*    
     // !AIVDM,1,1,,A,139Hgs0000PDSwJMdVUqlop:P>`<,0*1B"   
        //    memset(&ais, 0, sizeof (ais));
        struct ais_t ais = {
@@ -96,19 +96,36 @@ do{                                                                            \
            .type1.status = 0,
            .type1.turn = 0
        };    
-
-
     
        unsigned char bits[AIVDM1_PAYLOAD_SIZE];
        unsigned char * pbits = bits;
        memset(bits,0, sizeof(bits));
+       (void) ais;
+       
+/*
+ * |0-5     | 6  |Message Type            |type      |u|Constant: 1-3
+ * |6-7     | 2  |Repeat Indicator        |repeat    |u|Message repeat count  
+*/
+       bits[0] = (1 >> 2);
+/*
+ * |8-37    |30  |MMSI                    |mmsi      |u|9 decimal digits  
+ */
+//        memcpy(&bits[1], &mmsi2, sizeof(ais.mmsi));
+//        (unsigned)(bits[1]) = ais.mmsi;
+//        printf("--%u --\n", (unsigned)bits[1] );
+/*
+ * |38-41   | 4  |Navigation Status       |status    |e|See "Navigation Status"   
+ */    
    
+       /*
        #define MMPBIT(xxVALUExx, xxLENxx)                                          \
        do{                                                                         \
            memcpy(pbits,&(xxVALUExx),xxLENxx );                                    \
            pbits += xxLENxx;                                                       \
        } while(0);
+       */
    
+   /*
        MMPBIT(ais.type,6);                            // message type
        MMPBIT(ais.repeat,2);                          // repeat indicator
        MMPBIT(ais.mmsi, 30);                          // mmsi
@@ -124,15 +141,16 @@ do{                                                                            \
        MMPBIT(ais.type1.maneuver,2);                  // maneuver indicator
        pbits += 3;                                    // spare
        MMPBIT(ais.type1.raim,1);                      // raim flag
+       
      *pbits = (unsigned char)(ais.type1.radio);     // radio
-   
+   */
        pbits = bits;
    
        char payload[127];
        memset(payload,0, sizeof(payload));
        char * ppayload = payload;
    
-       while(pbits < (bits + AIVDM1_PAYLOAD_SIZE)){
+       while(pbits < (bits + AIVDM1_PAYLOAD_SIZE * 6)){
            unsigned char x = ((*pbits) & 64U) + 48U;
            printf("(%u:%p)%u\n",*pbits, pbits, x);
      *ppayload = (char)x;
@@ -140,10 +158,9 @@ do{                                                                            \
            ++ppayload;
        }
 
-        printf("%s%s\n", AIVDM_PREFIX,payload);
+//         printf("%s%s\n", AIVDM_PREFIX,payload);
     
     
-     */
     return 0;
 
 }

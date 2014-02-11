@@ -70,6 +70,7 @@ add_library(${LIBMM_A}
             ${LIBMM_SRC}/sub0.c 
             ${LIBMM_SRC}/netchannel.c 
             ${LIBMM_SRC}/bagride.c 
+            ${LIBMM_SRC}/tinybits.c 
             ${LIBMM_SRC}/sad.c)
             
 #ais decoder

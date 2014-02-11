@@ -29,6 +29,13 @@ f=ais_decoder
 gcc ${MMCC} -DSAD_ENABLE_ALL -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
 strip -s ${OUTDIR}/${f}
 
+#ais encoder
+f=ais_encoder
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/mmtrace.c
+strip -s ${OUTDIR}/${f}
+
+
+
 #ais decoder (full decode)
 f=ais_simple_udp_replayer
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c

@@ -70,11 +70,13 @@ test_release: release
 	@ bin/test_pool
 	@ bin/test_cb
 	@ bin/test_sad
-	
+	@ bin/test_bits
+
 test_debug: debug
 	@ bin/test_pool_d
 	@ bin/test_cb_d
 	@ bin/test_sad_d
+	@ bin/test_bits_d
 	
 .PHONY: clean
 clean:

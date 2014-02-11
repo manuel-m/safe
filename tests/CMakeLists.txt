@@ -1,11 +1,13 @@
 #tests
 set(TEST_POOL test_pool)
 set(TEST_CB test_cb)
+set(TEST_BITS test_bits)
 set(TEST_SAD test_sad)
 set(TEST_TCPCLIENT test_tcpclient)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(TEST_CB "${TEST_CB}_d")
+  set(TEST_BITS "${TEST_BITS}_d")
   set(TEST_POOL "${TEST_POOL}_d")
   set(TEST_SAD "${TEST_SAD}_d")
   set(TEST_TCPCLIENT "${TEST_TCPCLIENT}_d")
@@ -16,6 +18,10 @@ add_executable (${TEST_CB} ./test_cb.c ../${LIBMM_SRC}/mmcb.c)
 
 #pool 
 add_executable (${TEST_POOL} ./test_pool.c ../${LIBMM_SRC}/mmpool.c)
+
+#tinybits
+add_executable (${TEST_BITS} ./test_tinybits.c ../${LIBMM_SRC}/tinybits.c)
+
 
 #tcpclient
 add_executable (${TEST_TCPCLIENT} ./test_tcpclient.c ../${LIBMM_SRC}/bagride.c)
