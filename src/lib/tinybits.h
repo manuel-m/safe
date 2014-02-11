@@ -14,7 +14,7 @@ extern "C" {
             unsigned size_, char sep_);
 
     void tb_wbits_unsigned(unsigned char* dest_, unsigned bitsoffset_,
-            unsigned width_, unsigned n_);
+            unsigned width_, unsigned src_);
 
 
 #ifdef  __cplusplus

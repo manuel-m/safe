@@ -31,15 +31,23 @@ void tb_dump_unsigned_char_array(char* dest_, unsigned char *data_,
     }
 }
 
-//void tb_wbits_unsigned(unsigned char* dest_, unsigned bitsoffset_,
-//        unsigned width_, unsigned n_) {
-//    
-//    unsigned octet_start = bitsoffset_ / CHAR_BIT;
-//    
-//    for (i = start / CHAR_BIT;
-//    
-//    
-//
-//
-//
-//}
+void tb_wbits_unsigned(unsigned char* dest_, unsigned  bitsoffset_,
+        unsigned width_, unsigned src_) {
+    
+    unsigned i;
+        
+    for (i = 0; i < width_; i++){
+        
+        unsigned char* c  = dest_  + ((bitsoffset_+i)/ CHAR_BIT);
+        /*
+        unsigned b = ((bitsoffset_+i) % CHAR_BIT);
+        (void)b;
+         */
+        *c |= src_&(1<<i);
+    } 
+    
+    
+
+
+
+}
