@@ -1248,6 +1248,8 @@ extern "C" {
 #define GPS_JSON_COMMAND_MAX        80
 #define GPS_JSON_RESPONSE_MAX       4096
     
+    void from_sixbit(unsigned char *bitvec, unsigned int start, int count, char *to);
+    
 #define SAD_INIT   0     
 #define SAD_GATHER 1
 #define SAD_DECODE 1    

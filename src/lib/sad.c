@@ -127,8 +127,7 @@ int64_t sbits(signed char buf[], unsigned int start, unsigned int width)
 #endif
 
 
-#ifdef SAD_ENABLE_MESSAGE_5_OR_19
-static void from_sixbit(unsigned char *bitvec, unsigned int start, int count, char *to) {
+void from_sixbit(unsigned char *bitvec, unsigned int start, int count, char *to) {
 
     const char sixchr[64] =
             "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^- !\"#$%&'()*+,-./0123456789:;<=>?";
@@ -153,7 +152,7 @@ static void from_sixbit(unsigned char *bitvec, unsigned int start, int count, ch
             break;
     /*@ -type @*/
 }
-#endif /* SAD_ENABLE_MESSAGE_5_OR_19 */
+
 
 char *json_stringify(/*@out@*/ char *to,
         size_t len,
