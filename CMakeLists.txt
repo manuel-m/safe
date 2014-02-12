@@ -75,10 +75,10 @@ add_library(${LIBMM_A}
             
 #ais decoder
 # only decode 1,2,3 type messages
-add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}/${AIS_DECODER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
+add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}/${AIS_DECODER}.c ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
 
 #ais encoder
-add_executable (${AIS_ENCODER_EXE} src/${AIS_ENCODER}/${AIS_ENCODER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/mmtrace.c)
+add_executable (${AIS_ENCODER_EXE} src/${AIS_ENCODER}/${AIS_ENCODER}.c ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/tinybits.c ${LIBMM_SRC}/mmtrace.c)
 
 # only decode 1,2,3 type messages + meditarrean hardcoded filter
 add_executable (${AIS_HISTORY_FILTER_EXE} src/${AIS_HISTORY_FILTER}/${AIS_HISTORY_FILTER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)

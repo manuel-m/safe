@@ -1829,7 +1829,6 @@ int sad_decode_multiline(sad_filter_t* filter_, const char* buffer_, size_t n_) 
 
             /* payload binary decode */
             {
-                //                unsigned int u;
                 memset(&filter_->ais, 0, sizeof (struct ais_t));
                 struct ais_t *ais = &filter_->ais;
 #define MMUBITS(s, l)	ubits((unsigned char *)ais_context.bits, s, l)

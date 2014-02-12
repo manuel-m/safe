@@ -51,15 +51,14 @@ int main(int argc, char **argv) {
         MMTEST((0 == strcmp("00000100 00001001 01000000 ", buffer)));
     }
 
-    // 1000000000u
     {
-        unsigned ui = 4564u;
-        unsigned dest = 0;
-        tb_wbits_unsigned((unsigned char*)&dest, 0, 30, ui);
+        unsigned dest=0;
+        
+        tb_wbits_unsigned((unsigned char*)&dest, 3, 32, 7);
         
         memset(buffer, 0, sizeof (buffer));
-        tb_dump_unsigned_char_array(buffer, (unsigned char*)&dest, 
-                sizeof (unsigned), ' ');
+        
+        tb_dump_unsigned_char_array(buffer, (unsigned char*)&dest, 4, ' ');
         
         printf("%s\n",buffer);
         
