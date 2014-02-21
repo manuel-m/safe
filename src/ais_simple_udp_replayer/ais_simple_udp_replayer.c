@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
 end:
     close(udp_client_socket);
-    fclose(nmea_file);
+    if(nmea_file)fclose(nmea_file);
     return res;
 
 err:
