@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+OUTDIR=./bin
+#PROJ="ais_filter ais_server" 
+PROJ="ais_filter ais_buffer"
+
+LIBUV_A=$(find ./libs -name libuv.a)
+LIBCONFIG_A=$(find ./libs -name libconfig.a)
+
+LIBCONFIG_DIR=$(dirname $(find -name libconfig.h))
+
+# ensure output is available
+if [ ! -d ${OUTDIR} ]; then mkdir ./bin; fi 
+
+for f in ${PROJ}; do
+  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -I${LIBCONFIG_DIR} -Isrc/ -Isrc/lib -Ilibs/libuv/include \
+  $(ls src/lib/*.c src/${f}/*.c) \
+  ${LIBUV_A} ${LIBCONFIG_A} -lpthread -lrt -lm
+  strip -s ${OUTDIR}/${f}
+done
+
+#CC flags
+#MMCC="-fwhole-program -ffast-math -msse2 -O3 -DNDEBUG"
+MMCC="-ffast-math -msse2 -O3 -DNDEBUG"
+
+
+#file sampler
+f=file_sampler
+gcc ${MMCC} -o ${OUTDIR}/file_sampler -Isrc/lib src/ais_simple_udp_replayer/file_sampler.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
+strip -s ${OUTDIR}/${f}

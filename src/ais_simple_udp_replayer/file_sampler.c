@@ -11,7 +11,7 @@
 #include "sad.h"
 
 #define MM_BUFLEN 512 
-#define MM_MAXVESSELS 32
+#define MM_MAXVESSELS 4096
 
 #define MM_TIMESTAMP_CSV_OFFSET 14
 #define MM_MAX_NMEA_LEN 127
@@ -38,6 +38,15 @@ int on_ais_decoded(struct sad_filter_s * f_) {
     int r = 0;
     struct ais_t * ais = &f_->ais;
     if (3u < ais->type) return 0;
+    
+    // 46.34693, -9.93164
+    // 28.65203, 38.05664
+    // mediterranean filter 
+    const double lat = (double) ais->type1.lat * AIS_LATLON_DIV_INV;
+    const double lon = (double) ais->type1.lon * AIS_LATLON_DIV_INV;
+
+    /* mediterranean filter */
+    if (!(lon > -9.93 && lon < 38.0 && lat < 46.0 && lat > 38.0)) return 0;
     
     // search
     int i;
