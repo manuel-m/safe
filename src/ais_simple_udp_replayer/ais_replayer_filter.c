@@ -27,6 +27,7 @@ static unsigned vessels_count = 0;
 static unsigned banned_mmsi_size = 0;
 static unsigned* banned_mmsi_array = NULL;
 
+static FILE* nmea_file = 0;
 
 struct mmsi_ts {
   unsigned mmsi;
@@ -131,7 +132,7 @@ int main(int argc, char **argv) {
     
     if (sad_filter_init(&filter, on_ais_decoded, NULL, NULL)) MM_GERR("internal");
 
-    FILE* nmea_file = fopen(argv[1], "r");
+    nmea_file = fopen(argv[1], "r");
 
     memset(current_nmea, 0, sizeof (current_nmea));
 
