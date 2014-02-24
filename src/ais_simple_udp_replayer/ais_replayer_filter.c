@@ -1,16 +1,12 @@
 #include<stdio.h> 
 #include<string.h>
 #include<stdlib.h>
-#include<time.h>
 
-#include<arpa/inet.h>
-#include<sys/socket.h>
 #include <unistd.h>
 
 #include "mmtrace.h"
 #include "sad.h"
 
-#define MM_BUFLEN 512 
 #define MM_MAXVESSELS 4096
 
 #define MM_TIMESTAMP_CSV_OFFSET 14
