@@ -30,10 +30,9 @@ MMCC="-ffast-math -msse2 -O3 -DNDEBUG"
 # strip -s ${OUTDIR}/${f}
 
 #ais encoder
-f=ais_encoder
-gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/mmtrace.c
-strip -s ${OUTDIR}/${f}
-
+#f=ais_encoder
+#gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/mmtrace.c
+#strip -s ${OUTDIR}/${f}
 
 
 #ais decoder (full decode)
@@ -41,12 +40,7 @@ f=ais_simple_udp_replayer
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
 
-#file sampler
-f=file_sampler
-gcc ${MMCC} -o ${OUTDIR}/file_sampler -Isrc/lib src/ais_simple_udp_replayer/file_sampler.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
+#ais replayer filter
+gcc ${MMCC} -o ${OUTDIR}/ais_replayer_filter -Isrc/lib src/ais_simple_udp_replayer/ais_replayer_filter.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
 
-#ais_history_filter (full decode)
-f=ais_history_filter
-gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/sub0.c
-strip -s ${OUTDIR}/${f}

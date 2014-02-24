@@ -31,6 +31,7 @@ set(LIBRARY_OUTPUT_PATH ${DIST_DIR})
 set(AIS_DECODER ais_decoder)
 set(AIS_ENCODER ais_encoder)
 set(AIS_SIMPLE_UDP_REPLAYER ais_simple_udp_replayer)
+
 set(AIS_HISTORY_FILTER ais_history_filter)
 set(AIS_FILTER ais_filter)
 set(AIS_BUFFER ais_buffer)
@@ -39,8 +40,11 @@ set(AIS_SERVER ais_server)
 set(AIS_DECODER_EXE ${AIS_DECODER})
 set(AIS_ENCODER_EXE ${AIS_ENCODER})
 set(AIS_FILTER_EXE ${AIS_FILTER})
-set(AIS_HISTORY_FILTER_EXE ${AIS_HISTORY_FILTER})
 set(AIS_SIMPLE_UDP_REPLAYER_EXE ${AIS_SIMPLE_UDP_REPLAYER})
+
+set(AIS_REPLAYER_FILTER ais_replayer_filter)
+set(AIS_REPLAYER_FILTER_EXE ${AIS_REPLAYER_FILTER})
+
 set(AIS_BUFFER_EXE ${AIS_BUFFER})
 set(AIS_SERVER_EXE ${AIS_SERVER})
 set(AIS_CONFIG_EXE ${AIS_CONFIG})
@@ -52,8 +56,8 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(AIS_DECODER_EXE "${AIS_DECODER_EXE}_d")
   set(AIS_ENCODER_EXE "${AIS_ENCODER_EXE}_d")
   set(AIS_FILTER_EXE "${AIS_FILTER_EXE}_d")
-  set(AIS_HISTORY_FILTER_EXE "${AIS_HISTORY_FILTER_EXE}_d")
   set(AIS_SIMPLE_UDP_REPLAYER_EXE "${AIS_SIMPLE_UDP_REPLAYER}_d")
+  set(AIS_REPLAYER_FILTER_EXE "${AIS_REPLAYER_FILTER}_d")
   set(AIS_BUFFER_EXE "${AIS_BUFFER_EXE}_d")
   set(AIS_SERVER_EXE "${AIS_SERVER_EXE}_d")
   set(AIS_CONFIG_EXE "${AIS_CONFIG_EXE}_d")
@@ -73,18 +77,11 @@ add_library(${LIBMM_A}
             ${LIBMM_SRC}/tinybits.c 
             ${LIBMM_SRC}/sad.c)
             
-#ais decoder
-# only decode 1,2,3 type messages
 add_executable (${AIS_DECODER_EXE} src/${AIS_DECODER}/${AIS_DECODER}.c ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
-
-#ais encoder
-add_executable (${AIS_ENCODER_EXE} src/${AIS_ENCODER}/${AIS_ENCODER}.c ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/tinybits.c ${LIBMM_SRC}/mmtrace.c)
-
-# only decode 1,2,3 type messages + meditarrean hardcoded filter
-add_executable (${AIS_HISTORY_FILTER_EXE} src/${AIS_HISTORY_FILTER}/${AIS_HISTORY_FILTER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c)
-
-# only replay 1,2,3 type messages 
+#add_executable (${AIS_ENCODER_EXE} src/${AIS_ENCODER}/${AIS_ENCODER}.c ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/tinybits.c ${LIBMM_SRC}/mmtrace.c)
 add_executable (${AIS_SIMPLE_UDP_REPLAYER_EXE} src/${AIS_SIMPLE_UDP_REPLAYER}/${AIS_SIMPLE_UDP_REPLAYER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/mmtrace.c )
+
+add_executable (${AIS_REPLAYER_FILTER_EXE} src/${AIS_SIMPLE_UDP_REPLAYER}/${AIS_REPLAYER_FILTER}.c  ${LIBMM_SRC}/sad.c ${LIBMM_SRC}/sub0.c ${LIBMM_SRC}/mmtrace.c )
 
 
 #ais config
