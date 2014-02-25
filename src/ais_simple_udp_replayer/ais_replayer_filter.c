@@ -53,37 +53,37 @@ int on_ais_decoded(struct sad_filter_s * f_) {
     // no we only want 1,2,3 message types
     if (3u < ais->type) goto dismiss;
     
-    /* mediterranean filter
-       46.34693, -9.93164
-       28.65203, 38.05664 
-    */
+    // mediterranean filter
     const double lat = (double) ais->type1.lat * AIS_LATLON_DIV_INV;
     const double lon = (double) ais->type1.lon * AIS_LATLON_DIV_INV;
 
     // yes it's hardcoded ...
     if (!(lon > -9.93 && lon < 38.0 && lat < 46.0 && lat > 30.0)) goto dismiss;
     
-    // search into sampling buffer 
-    int i;
-    for(i=0;i<MM_MAXVESSELS;i++){
-      if(ais->mmsi == mmsi_buffer[i].mmsi){
-        if(read_ts - mmsi_buffer[i].last_ts >= sampling){
-          mmsi_buffer[i].last_ts = read_ts;
-          goto accept;
-        } else goto dismiss; // dismiss
+    // sampling == 0 no sampling
+    if(0 == sampling) goto accept;
+    else
+    {
+      // search into sampling buffer 
+      int i;
+      for(i=0;i<MM_MAXVESSELS;i++){
+        if(ais->mmsi == mmsi_buffer[i].mmsi){
+          if(read_ts - mmsi_buffer[i].last_ts >= sampling){
+            mmsi_buffer[i].last_ts = read_ts;
+            goto accept;
+          } else goto dismiss; // dismiss
+        }
       }
+      // not found, add new vessel to sampling buffer
+      if(vessels_count < MM_MAXVESSELS){
+        mmsi_buffer[vessels_count].mmsi = ais->mmsi;
+        mmsi_buffer[vessels_count].last_ts = read_ts;
+        ++vessels_count;
+        goto accept;
+      }
+      // new vessel saturation, it's an error
+      goto err;
     }
-    
-    // not found, add new vessel to sampling buffer
-    if(vessels_count < MM_MAXVESSELS){
-      mmsi_buffer[vessels_count].mmsi = ais->mmsi;
-      mmsi_buffer[vessels_count].last_ts = read_ts;
-      ++vessels_count;
-      goto accept;
-    }
-    
-    // new vessel saturation, it's an error
-    goto err;
     
 accept:
     printf("%s",current_nmea);
@@ -102,11 +102,12 @@ int main(int argc, char **argv) {
     int res = 0;
     memset(mmsi_buffer,0,sizeof(mmsi_buffer));
 
-    if (3 > argc) MM_GERR("%s path/to/file.nmea sampling [mmsi list to exclude]\n", argv[0]);
+    if (3 > argc) MM_GERR("%s path/to/file.nmea sampling [mmsi list to exclude]\n\tsampling 0 for to disable sampling\n", argv[0]);
            
     sampling = (unsigned) atoi(argv[2]);
     
     // we do have filtered mmsi
+    if(sampling)
     {
         banned_mmsi_size = argc - 3;
         banned_mmsi_array = calloc(banned_mmsi_size, sizeof (unsigned));
