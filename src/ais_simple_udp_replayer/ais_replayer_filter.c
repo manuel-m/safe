@@ -61,7 +61,7 @@ int on_ais_decoded(struct sad_filter_s * f_) {
     const double lon = (double) ais->type1.lon * AIS_LATLON_DIV_INV;
 
     // yes it's hardcoded ...
-    if (!(lon > -9.93 && lon < 38.0 && lat < 46.0 && lat > 38.0)) goto dismiss;
+    if (!(lon > -9.93 && lon < 38.0 && lat < 46.0 && lat > 30.0)) goto dismiss;
     
     // search into sampling buffer 
     int i;
