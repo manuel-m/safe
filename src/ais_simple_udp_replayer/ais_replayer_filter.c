@@ -7,7 +7,7 @@
 #include "mmtrace.h"
 #include "sad.h"
 
-#define MM_MAXVESSELS 4096
+#define MM_MAXVESSELS 8192
 
 #define MM_TIMESTAMP_CSV_OFFSET 14
 #define MM_MAX_NMEA_LEN 127
