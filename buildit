@@ -5,20 +5,20 @@ OUTDIR=./bin
 #PROJ="ais_filter ais_server" 
 PROJ="ais_filter ais_buffer"
 
-LIBUV_A=$(find ./libs -name libuv.a)
-LIBCONFIG_A=$(find ./libs -name libconfig.a)
+#LIBUV_A=$(find ./libs -name libuv.a)
+#LIBCONFIG_A=$(find ./libs -name libconfig.a)
 
-LIBCONFIG_DIR=$(dirname $(find -name libconfig.h))
+#LIBCONFIG_DIR=$(dirname $(find -name libconfig.h))
 
 # ensure output is available
 if [ ! -d ${OUTDIR} ]; then mkdir ./bin; fi 
 
-for f in ${PROJ}; do
-  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -I${LIBCONFIG_DIR} -Isrc/ -Isrc/lib -Ilibs/libuv/include \
-  $(ls src/lib/*.c src/${f}/*.c) \
-  ${LIBUV_A} ${LIBCONFIG_A} -lpthread -lrt -lm
-  strip -s ${OUTDIR}/${f}
-done
+#for f in ${PROJ}; do
+#  gcc -O3 -DNDEBUG -o ${OUTDIR}/${f} -I${LIBCONFIG_DIR} -Isrc/ -Isrc/lib -Ilibs/libuv/include \
+#  $(ls src/lib/*.c src/${f}/*.c) \
+#  ${LIBUV_A} ${LIBCONFIG_A} -lpthread -lrt -lm
+#  strip -s ${OUTDIR}/${f}
+#done
 
 #CC flags
 #MMCC="-fwhole-program -ffast-math -msse2 -O3 -DNDEBUG"
@@ -41,6 +41,13 @@ gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/${f}/${f}.c  src/lib/sad.c src/lib/s
 strip -s ${OUTDIR}/${f}
 
 #ais replayer filter
-gcc ${MMCC} -o ${OUTDIR}/ais_replayer_filter -Isrc/lib src/ais_simple_udp_replayer/ais_replayer_filter.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
+f=ais_replayer_filter
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/ais_simple_udp_replayer/${f}.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
+
+#ais replayer merger
+f=ais_replayer_merger
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/ais_simple_udp_replayer/${f}.c src/lib/mmtrace.c
+strip -s ${OUTDIR}/${f}
+
 
