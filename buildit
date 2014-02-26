@@ -45,6 +45,11 @@ f=ais_replayer_filter
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/ais_simple_udp_replayer/${f}.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
 strip -s ${OUTDIR}/${f}
 
+#ais replayer decoder
+f=ais_replayer_decoder
+gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/ais_simple_udp_replayer/${f}.c src/lib/sad.c src/lib/sub0.c src/lib/mmtrace.c
+strip -s ${OUTDIR}/${f}
+
 #ais replayer merger
 f=ais_replayer_merger
 gcc ${MMCC} -o ${OUTDIR}/${f} -Isrc/lib src/ais_simple_udp_replayer/${f}.c src/lib/mmtrace.c

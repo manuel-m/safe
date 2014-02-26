@@ -18,7 +18,6 @@ static const char* nmea_without_ts = (char*) (current_nmea + MM_TIMESTAMP_CSV_OF
 
 static unsigned read_ts = 0;
 static unsigned sampling = 0;
-static unsigned vessels_count = 0;
 
 static unsigned banned_mmsi_size = 0;
 static unsigned* banned_mmsi_array = NULL;
@@ -31,6 +30,7 @@ struct mmsi_ts {
 };
 
 static struct mmsi_ts mmsi_buffer[MM_MAXVESSELS];
+static unsigned mmsi_buffer_size = 0;
 
 static sad_filter_t filter;
 
@@ -53,19 +53,18 @@ int on_ais_decoded(struct sad_filter_s * f_) {
     // no we only want 1,2,3 message types
     if (3u < ais->type) goto dismiss;
     
-    /* mediterranean filter
-       46.34693, -9.93164
-       28.65203, 38.05664 
-    */
+    
+
     const double lat = (double) ais->type1.lat * AIS_LATLON_DIV_INV;
     const double lon = (double) ais->type1.lon * AIS_LATLON_DIV_INV;
 
+    // mediterranean filter
     // yes it's hardcoded ...
     if (!(lon > -9.93 && lon < 38.0 && lat < 46.0 && lat > 30.0)) goto dismiss;
     
     // search into sampling buffer 
     int i;
-    for(i=0;i<MM_MAXVESSELS;i++){
+    for(i=0;i<mmsi_buffer_size;i++){
       if(ais->mmsi == mmsi_buffer[i].mmsi){
         if(read_ts - mmsi_buffer[i].last_ts >= sampling){
           mmsi_buffer[i].last_ts = read_ts;
@@ -75,10 +74,10 @@ int on_ais_decoded(struct sad_filter_s * f_) {
     }
     
     // not found, add new vessel to sampling buffer
-    if(vessels_count < MM_MAXVESSELS){
-      mmsi_buffer[vessels_count].mmsi = ais->mmsi;
-      mmsi_buffer[vessels_count].last_ts = read_ts;
-      ++vessels_count;
+    if(mmsi_buffer_size < MM_MAXVESSELS){
+      mmsi_buffer[mmsi_buffer_size].mmsi = ais->mmsi;
+      mmsi_buffer[mmsi_buffer_size].last_ts = read_ts;
+      ++mmsi_buffer_size;
       goto accept;
     }
     
